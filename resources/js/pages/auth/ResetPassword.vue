@@ -1,20 +1,19 @@
 <script setup lang="ts">
-import { Form, Head } from '@inertiajs/vue3';
+import { Form, Head, Link } from '@inertiajs/vue3';
+import {
+    ArrowLeft,
+    ArrowRight,
+    KeyRound,
+    Mail,
+    ShieldCheck,
+    Sparkles,
+} from 'lucide-vue-next';
 import { ref } from 'vue';
+
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Spinner } from '@/components/ui/spinner';
+import { login } from '@/routes';
 import { update } from '@/routes/password';
-
-defineOptions({
-    layout: {
-        title: 'Reset password',
-        description: 'Please enter your new password below',
-    },
-});
 
 const props = defineProps<{
     token: string;
@@ -26,65 +25,204 @@ const inputEmail = ref(props.email);
 </script>
 
 <template>
-    <Head title="Reset password" />
+    <Head title="Reset Password" />
 
-    <Form
-        v-bind="update.form()"
-        :transform="(data) => ({ ...data, token, email })"
-        :reset-on-success="['password', 'password_confirmation']"
-        v-slot="{ errors, processing }"
+    <main
+        class="min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-orange-50 via-white to-amber-50 font-sans text-slate-900"
     >
-        <div class="grid gap-6">
-            <div class="grid gap-2">
-                <Label for="email">Email</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    name="email"
-                    autocomplete="email"
-                    v-model="inputEmail"
-                    class="mt-1 block w-full"
-                    readonly
-                />
-                <InputError :message="errors.email" class="mt-2" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="password">Password</Label>
-                <PasswordInput
-                    id="password"
-                    name="password"
-                    autocomplete="new-password"
-                    class="mt-1 block w-full"
-                    autofocus
-                    placeholder="Password"
-                    :passwordrules="passwordRules"
-                />
-                <InputError :message="errors.password" />
-            </div>
-
-            <div class="grid gap-2">
-                <Label for="password_confirmation"> Confirm password </Label>
-                <PasswordInput
-                    id="password_confirmation"
-                    name="password_confirmation"
-                    autocomplete="new-password"
-                    class="mt-1 block w-full"
-                    placeholder="Confirm password"
-                    :passwordrules="passwordRules"
-                />
-                <InputError :message="errors.password_confirmation" />
-            </div>
-
-            <Button
-                type="submit"
-                class="mt-4 w-full"
-                :disabled="processing"
-                data-test="reset-password-button"
+        <section class="flex min-h-screen items-center justify-center px-3 py-6 sm:px-4 sm:py-8">
+            <div
+                class="grid w-full max-w-md overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-2xl shadow-orange-900/10 sm:rounded-[2rem] lg:max-w-5xl lg:grid-cols-2"
             >
-                <Spinner v-if="processing" />
-                Reset password
-            </Button>
-        </div>
-    </Form>
+                <!-- Left Panel -->
+                <div
+                    class="hidden min-w-0 overflow-hidden bg-gradient-to-br from-orange-500 via-orange-500 to-amber-400 p-8 text-white lg:block"
+                >
+                    <div class="flex h-full min-h-[520px] flex-col justify-between">
+                        <div>
+                            <div
+                                class="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-4 py-2 text-xs font-bold text-white shadow-sm backdrop-blur"
+                            >
+                                <span class="h-2 w-2 rounded-full bg-white"></span>
+                                KOMINFIK Security
+                            </div>
+
+                            <h1 class="mt-8 max-w-sm text-3xl font-black leading-tight tracking-tight xl:text-4xl">
+                                Buat password baru untuk akun KOMINFIK.
+                            </h1>
+
+                            <p class="mt-5 max-w-sm text-sm leading-7 text-orange-50">
+                                Gunakan password yang kuat agar akun kamu tetap aman dan bisa digunakan kembali.
+                            </p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="rounded-3xl border border-white/20 bg-white/15 p-5 shadow-xl backdrop-blur">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-orange-600"
+                                    >
+                                        <ShieldCheck class="h-6 w-6" stroke-width="2.5" />
+                                    </div>
+
+                                    <div class="min-w-0">
+                                        <h3 class="font-black">Reset Aman</h3>
+                                        <p class="mt-1 text-sm leading-6 text-orange-50">
+                                            Form ini hanya digunakan untuk memperbarui password akun.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="rounded-3xl border border-white/20 bg-slate-950/15 p-5 shadow-xl backdrop-blur">
+                                <div class="flex items-center gap-4">
+                                    <div
+                                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-orange-600"
+                                    >
+                                        <Sparkles class="h-6 w-6" stroke-width="2.5" />
+                                    </div>
+
+                                    <div class="min-w-0">
+                                        <h3 class="font-black">Akses Kembali</h3>
+                                        <p class="mt-1 text-sm leading-6 text-orange-50">
+                                            Setelah reset berhasil, kamu bisa login menggunakan password baru.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Panel -->
+                <div class="flex min-w-0 items-center justify-center p-5 sm:p-8 lg:p-10">
+                    <div class="w-full max-w-sm">
+                        <div class="mb-6 text-center sm:mb-8">
+                            <div
+                                class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-white shadow-xl shadow-orange-500/25 sm:mb-5 sm:h-16 sm:w-16 sm:rounded-3xl"
+                            >
+                                <KeyRound class="h-7 w-7 sm:h-8 sm:w-8" stroke-width="2.5" />
+                            </div>
+
+                            <h2 class="text-xl font-black tracking-tight text-slate-950 sm:text-2xl lg:text-3xl">
+                                Reset Password
+                            </h2>
+
+                            <p class="mt-2 text-sm leading-6 text-slate-500 sm:mt-3">
+                                Masukkan password baru untuk melanjutkan akses akun kamu.
+                            </p>
+                        </div>
+
+                        <Form
+                            v-bind="update.form()"
+                            :transform="(data) => ({ ...data, token: props.token, email: inputEmail })"
+                            :reset-on-success="['password', 'password_confirmation']"
+                            v-slot="{ errors, processing }"
+                            class="space-y-4 sm:space-y-5"
+                        >
+                            <!-- Email -->
+                            <div>
+                                <label for="email" class="mb-2 block text-sm font-black text-slate-800">
+                                    Email
+                                </label>
+
+                                <div class="relative">
+                                    <Mail
+                                        class="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+                                        stroke-width="2.3"
+                                    />
+
+                                    <input
+                                        id="email"
+                                        v-model="inputEmail"
+                                        type="email"
+                                        name="email"
+                                        autocomplete="email"
+                                        readonly
+                                        class="h-12 w-full rounded-2xl border border-orange-100 bg-orange-50/60 pl-12 pr-4 text-sm font-semibold text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 sm:h-14"
+                                    />
+                                </div>
+
+                                <InputError :message="errors.email" class="mt-2" />
+                            </div>
+
+                            <!-- Password -->
+                            <div>
+                                <label for="password" class="mb-2 block text-sm font-black text-slate-800">
+                                    Password Baru
+                                </label>
+
+                                <PasswordInput
+                                    id="password"
+                                    name="password"
+                                    autocomplete="new-password"
+                                    autofocus
+                                    placeholder="Masukkan password baru"
+                                    :passwordrules="passwordRules"
+                                    class="h-12 w-full rounded-2xl border border-orange-100 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 sm:h-14"
+                                />
+
+                                <InputError :message="errors.password" class="mt-2" />
+                            </div>
+
+                            <!-- Confirm Password -->
+                            <div>
+                                <label
+                                    for="password_confirmation"
+                                    class="mb-2 block text-sm font-black text-slate-800"
+                                >
+                                    Konfirmasi Password
+                                </label>
+
+                                <PasswordInput
+                                    id="password_confirmation"
+                                    name="password_confirmation"
+                                    autocomplete="new-password"
+                                    placeholder="Ulangi password baru"
+                                    :passwordrules="passwordRules"
+                                    class="h-12 w-full rounded-2xl border border-orange-100 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-orange-300 focus:ring-4 focus:ring-orange-100 sm:h-14"
+                                />
+
+                                <InputError :message="errors.password_confirmation" class="mt-2" />
+                            </div>
+
+                            <!-- Submit -->
+                            <button
+                                type="submit"
+                                :disabled="processing"
+                                data-test="reset-password-button"
+                                class="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 px-6 text-sm font-black text-white shadow-xl shadow-orange-500/25 transition duration-300 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-orange-500/30 disabled:pointer-events-none disabled:opacity-70 sm:h-14"
+                            >
+                                <span
+                                    v-if="processing"
+                                    class="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                                ></span>
+
+                                <span>
+                                    {{ processing ? 'Memproses...' : 'Reset Password' }}
+                                </span>
+
+                                <ArrowRight
+                                    v-if="!processing"
+                                    class="h-5 w-5 transition duration-300 group-hover:translate-x-1"
+                                    stroke-width="2.5"
+                                />
+                            </button>
+                        </Form>
+
+                        <!-- Back Login -->
+                        <div class="mt-6 text-center sm:mt-8">
+                            <Link
+                                :href="login().url"
+                                class="inline-flex items-center justify-center gap-2 text-sm font-black text-orange-600 transition hover:text-orange-700 hover:underline"
+                            >
+                                <ArrowLeft class="h-4 w-4" stroke-width="2.5" />
+                                Kembali ke Login
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 </template>

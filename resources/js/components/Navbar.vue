@@ -1,36 +1,68 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const page = usePage();
+const mobileOpen = ref(false);
 
 const user = computed(() => {
     const auth = page.props.auth as { user?: { name: string; email?: string } | null } | undefined;
 
     return auth?.user ?? null;
 });
+
+const navItems = [
+    { label: 'Beranda', href: '#beranda' },
+    { label: 'Project', href: '#project' },
+    { label: 'Anggota', href: '#anggota' },
+    { label: 'Layanan', href: '#layanan' },
+    { label: 'Kerjasama', href: '#kerjasama' },
+];
 </script>
 
 <template>
-    <header class="sticky top-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur">
-        <nav class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-            <Link href="/" class="text-xl font-extrabold text-blue-600">
-                KOMINFIK
-            </Link>
+    <header
+        class="sticky top-0 z-50 border-b border-orange-100/80 bg-white/85 shadow-[0_10px_40px_rgba(251,146,60,0.08)] backdrop-blur-xl"
+    >
+        <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 lg:px-6">
+            <!-- Brand -->
+            <a href="#beranda" class="group flex items-center gap-3">
+                <div
+                    class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-black text-white shadow-lg shadow-orange-500/25 transition duration-300 group-hover:-translate-y-0.5 group-hover:scale-105"
+                >
+                    K
+                </div>
 
-            <div class="hidden items-center gap-7 text-sm font-medium text-gray-700 md:flex">
-                <Link href="/" class="hover:text-blue-600">Beranda</Link>
-                <Link href="/project" class="hover:text-blue-600">Project</Link>
-                <Link href="/anggota" class="hover:text-blue-600">Anggota</Link>
-                <Link href="/layanan" class="hover:text-blue-600">Layanan</Link>
-                <Link href="/kerjasama" class="hover:text-blue-600">Kerjasama</Link>
+                <div class="leading-tight">
+                    <h1 class="text-lg font-black tracking-tight text-slate-900">
+                        KOMINFIK
+                    </h1>
+                    <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-400">
+                        Creative Tech
+                    </p>
+                </div>
+            </a>
+
+            <!-- Desktop Menu -->
+            <div
+                class="hidden items-center rounded-2xl border border-orange-100 bg-orange-50/80 p-1 shadow-inner shadow-orange-100/40 md:flex"
+            >
+                <a
+                    v-for="item in navItems"
+                    :key="item.href"
+                    :href="item.href"
+                    class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 transition duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-orange-600 hover:shadow-sm hover:shadow-orange-200/60"
+                >
+                    {{ item.label }}
+                </a>
             </div>
 
-            <div class="flex items-center gap-3">
+            <!-- Desktop Action -->
+            <div class="hidden items-center gap-3 md:flex">
                 <template v-if="user">
                     <Link
                         href="/dashboard"
-                        class="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                        class="rounded-2xl border border-orange-100 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700 hover:shadow-md hover:shadow-orange-100"
                     >
                         Dashboard
                     </Link>
@@ -39,19 +71,106 @@ const user = computed(() => {
                 <template v-else>
                     <Link
                         href="/login"
-                        class="hidden text-sm font-semibold text-gray-700 hover:text-blue-600 sm:inline"
+                        class="rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-600 transition duration-300 hover:bg-orange-50 hover:text-orange-600"
                     >
                         Login
                     </Link>
 
                     <Link
                         href="/join"
-                        class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+                        class="rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-orange-500/25 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-500/30"
                     >
                         Join
                     </Link>
                 </template>
             </div>
+
+            <!-- Mobile Button -->
+            <button
+                type="button"
+                class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-orange-100 bg-white text-slate-700 shadow-sm transition hover:bg-orange-50 hover:text-orange-600 md:hidden"
+                :aria-expanded="mobileOpen"
+                aria-label="Toggle navigation menu"
+                @click="mobileOpen = !mobileOpen"
+            >
+                <svg
+                    v-if="!mobileOpen"
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+
+                <svg
+                    v-else
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+            </button>
         </nav>
+
+        <!-- Mobile Menu Smooth -->
+        <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="-translate-y-3 opacity-0"
+            enter-to-class="translate-y-0 opacity-100"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="translate-y-0 opacity-100"
+            leave-to-class="-translate-y-3 opacity-0"
+        >
+            <div
+                v-if="mobileOpen"
+                class="border-t border-orange-100 bg-white/95 px-5 py-4 shadow-xl shadow-orange-100/50 backdrop-blur-xl md:hidden"
+            >
+                <div class="space-y-2">
+                    <a
+                        v-for="item in navItems"
+                        :key="item.href"
+                        :href="item.href"
+                        class="block rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-orange-50 hover:text-orange-700"
+                        @click="mobileOpen = false"
+                    >
+                        {{ item.label }}
+                    </a>
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                    <template v-if="user">
+                        <Link
+                            href="/dashboard"
+                            class="col-span-2 rounded-2xl border border-orange-100 px-4 py-3 text-center text-sm font-bold text-slate-700 transition hover:bg-orange-50 hover:text-orange-700"
+                        >
+                            Dashboard
+                        </Link>
+                    </template>
+
+                    <template v-else>
+                        <Link
+                            href="/login"
+                            class="rounded-2xl border border-orange-100 px-4 py-3 text-center text-sm font-bold text-slate-700 transition hover:bg-orange-50 hover:text-orange-700"
+                        >
+                            Login
+                        </Link>
+
+                        <Link
+                            href="/join"
+                            class="rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-orange-500/25"
+                        >
+                            Join
+                        </Link>
+                    </template>
+                </div>
+            </div>
+        </Transition>
     </header>
 </template>

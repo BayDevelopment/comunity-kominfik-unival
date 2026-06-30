@@ -16,6 +16,11 @@ const publicPages = [
     'Layanan',
     'Join',
     'Kerjasama',
+    // manual
+    'auth/Login',
+    'auth/Register',
+    'auth/ForgotPassword',
+    'auth/ResetPassword',
 ];
 
 createInertiaApp({

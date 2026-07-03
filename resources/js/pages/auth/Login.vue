@@ -12,6 +12,8 @@ import {
 } from 'lucide-vue-next';
 import { ref } from 'vue';
 
+import AppAuthLogo from '@/components/AppAuthLogo.vue';
+
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
@@ -105,10 +107,7 @@ const submit = () => {
                 <div class="flex min-w-0 items-center justify-center p-5 sm:p-8 lg:p-10">
                     <div class="w-full max-w-sm">
                         <div class="mb-6 text-center sm:mb-8">
-                            <div
-                                class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-xl font-black text-white shadow-xl shadow-orange-500/25 sm:mb-5 sm:h-16 sm:w-16 sm:rounded-3xl sm:text-2xl">
-                                K
-                            </div>
+                            <AppAuthLogo />
 
                             <h2 class="text-xl font-black tracking-tight text-slate-950 sm:text-2xl lg:text-3xl">
                                 Selamat Datang

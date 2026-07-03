@@ -9,6 +9,8 @@ import {
     Sparkles,
 } from 'lucide-vue-next';
 
+import AppAuthLogo from '@/components/AppAuthLogo.vue';
+
 defineProps<{
     status?: string;
 }>();
@@ -93,10 +95,7 @@ const submit = () => {
                 <div class="flex min-w-0 items-center justify-center p-5 sm:p-8 lg:p-10">
                     <div class="w-full max-w-sm">
                         <div class="mb-6 text-center sm:mb-8">
-                            <div
-                                class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-white shadow-xl shadow-orange-500/25 sm:mb-5 sm:h-16 sm:w-16 sm:rounded-3xl">
-                                <Mail class="h-7 w-7 sm:h-8 sm:w-8" stroke-width="2.5" />
-                            </div>
+                            <AppAuthLogo/>
 
                             <h2 class="text-xl font-black tracking-tight text-slate-950 sm:text-2xl lg:text-3xl">
                                 Lupa Password

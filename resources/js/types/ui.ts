@@ -3,7 +3,7 @@ export type ResolvedAppearance = 'light' | 'dark';
 
 export type AppVariant = 'header' | 'sidebar';
 
-export type FlashToast = {
-    type: 'success' | 'info' | 'warning' | 'error';
+export interface FlashToast {
+    type: 'success' | 'error' | 'info' | 'warning' | 'message';
     message: string;
-};
+}

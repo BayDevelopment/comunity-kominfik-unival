@@ -12,6 +12,7 @@ import {
     FolderX,
     SlidersHorizontal,
 } from '@lucide/vue';
+import Swal from 'sweetalert2';
 import { ref, watch } from 'vue';
 import { dashboard } from '@/routes';
 
@@ -31,40 +32,55 @@ defineOptions({
 });
 
 interface Project {
-    id: number
-    nama: string
-    klien: string
-    status: 'aktif' | 'selesai' | 'ditunda' | 'dibatalkan'
-    mulai: string
-    selesai: string | null
-    pic: string
+    id: number;
+    nama: string;
+    klien: string;
+    status: 'aktif' | 'selesai' | 'ditunda' | 'dibatalkan';
+    mulai: string;
+    selesai: string | null;
+    pic: string;
 }
 
 interface Paginated<T> {
-    data: T[]
-    current_page: number
-    last_page: number
-    from: number | null
-    to: number | null
-    total: number
+    data: T[];
+    current_page: number;
+    last_page: number;
+    from: number | null;
+    to: number | null;
+    total: number;
 }
 
 const props = defineProps<{
-    projects?: Paginated<Project>
+    projects?: Paginated<Project>;
     filters?: {
-        search?: string
-        status?: string
-    }
+        search?: string;
+        status?: string;
+    };
 }>();
 
 const search = ref(props.filters?.search ?? '');
 const status = ref(props.filters?.status ?? '');
 
-const statusConfig: Record<Project['status'], { label: string; class: string }> = {
-    aktif: { label: 'Aktif', class: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20' },
-    selesai: { label: 'Selesai', class: 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20' },
-    ditunda: { label: 'Ditunda', class: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20' },
-    dibatalkan: { label: 'Dibatalkan', class: 'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/20' },
+const statusConfig: Record<
+    Project['status'],
+    { label: string; class: string }
+> = {
+    aktif: {
+        label: 'Aktif',
+        class: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
+    },
+    selesai: {
+        label: 'Selesai',
+        class: 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20',
+    },
+    ditunda: {
+        label: 'Ditunda',
+        class: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
+    },
+    dibatalkan: {
+        label: 'Dibatalkan',
+        class: 'bg-rose-50 text-rose-700 ring-rose-600/20 dark:bg-rose-500/10 dark:text-rose-400 dark:ring-rose-500/20',
+    },
 };
 
 function formatTanggal(value: string | null) {
@@ -84,50 +100,75 @@ let debounceTimer: ReturnType<typeof setTimeout>;
 function applyFilters() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
-        router.get('/project', {
-            search: search.value || undefined,
-            status: status.value || undefined,
-        }, {
-            preserveState: true,
-            replace: true,
-        });
+        router.get(
+            '/project',
+            {
+                search: search.value || undefined,
+                status: status.value || undefined,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
     }, 350);
 }
 
 watch([search, status], applyFilters);
 
 function goToPage(page: number) {
-    router.get('/project', {
-        search: search.value || undefined,
-        status: status.value || undefined,
-        page,
-    }, {
-        preserveState: true,
-        preserveScroll: true,
-    });
+    router.get(
+        '/project',
+        {
+            search: search.value || undefined,
+            status: status.value || undefined,
+            page,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+        },
+    );
 }
 
-function hapusProject(project: Project) {
-    if (confirm(`Hapus project "${project.nama}"? Tindakan ini tidak dapat dibatalkan.`)) {
-        router.delete(`/project/${project.id}`, {
-            preserveScroll: true,
-        });
-    }
-}
+const deletingId = ref<number | null>(null);
+
+const hapusProject = (project: Project) => {
+    Swal.fire({
+        title: 'Hapus Project?',
+        html: `Project <b>"${project.nama}"</b> akan dihapus secara permanen.<br>Tindakan ini tidak dapat dibatalkan.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Hapus',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#e11d48',
+        cancelButtonColor: '#6b7280',
+        reverseButtons: true,
+        focusCancel: true,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            deletingId.value = project.id;
+            router.delete(`/project/${project.id}`, {
+                preserveScroll: true,
+                onFinish: () => {
+                    deletingId.value = null;
+                },
+            });
+        }
+    });
+};
 </script>
 
 <template>
-
     <Head title="Project" />
 
     <div class="space-y-6 p-6">
-
         <!-- Header -->
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div
+            class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        >
             <div>
-                <h1 class="text-2xl font-bold">
-                    Data Project
-                </h1>
+                <h1 class="text-2xl font-bold">Data Project</h1>
 
                 <p class="text-sm text-muted-foreground">
                     Kelola seluruh project KOMINFIK dalam satu tempat.
@@ -144,22 +185,28 @@ function hapusProject(project: Project) {
         </div>
 
         <!-- Filter Bar -->
-        <div class="flex flex-col gap-3 rounded-xl border bg-background p-4 shadow-sm sm:flex-row sm:items-center">
+        <div
+            class="flex flex-col gap-3 rounded-xl border bg-background p-4 shadow-sm sm:flex-row sm:items-center"
+        >
             <div class="relative flex-1">
-                <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search
+                    class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                />
                 <input
                     v-model="search"
                     type="text"
                     placeholder="Cari nama project atau klien..."
-                    class="w-full rounded-lg border bg-background py-2.5 pl-9 pr-3 text-sm outline-none ring-offset-background transition-shadow placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
+                    class="w-full rounded-lg border bg-background py-2.5 pr-3 pl-9 text-sm ring-offset-background transition-shadow outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
                 />
             </div>
 
             <div class="relative sm:w-52">
-                <SlidersHorizontal class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <SlidersHorizontal
+                    class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                />
                 <select
                     v-model="status"
-                    class="w-full appearance-none rounded-lg border bg-background py-2.5 pl-9 pr-3 text-sm outline-none transition-shadow focus:ring-2 focus:ring-ring"
+                    class="w-full appearance-none rounded-lg border bg-background py-2.5 pr-3 pl-9 text-sm transition-shadow outline-none focus:ring-2 focus:ring-ring"
                 >
                     <option value="">Semua Status</option>
                     <option value="aktif">Aktif</option>
@@ -172,9 +219,13 @@ function hapusProject(project: Project) {
 
         <!-- Table Card -->
         <div class="overflow-hidden rounded-xl border bg-background shadow-sm">
-
-            <div v-if="!projects || projects.data.length === 0" class="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-                <div class="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+            <div
+                v-if="!projects || projects.data.length === 0"
+                class="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center"
+            >
+                <div
+                    class="flex h-12 w-12 items-center justify-center rounded-full bg-muted"
+                >
                     <FolderX class="h-6 w-6 text-muted-foreground" />
                 </div>
                 <div>
@@ -195,13 +246,19 @@ function hapusProject(project: Project) {
             <div v-else class="overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead>
-                        <tr class="border-b bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                        <tr
+                            class="border-b bg-muted/40 text-left text-xs tracking-wide text-muted-foreground uppercase"
+                        >
                             <th class="px-6 py-3 font-medium">Project</th>
-                            <th class="px-6 py-3 font-medium">Klien / Instansi</th>
+                            <th class="px-6 py-3 font-medium">
+                                Klien / Instansi
+                            </th>
                             <th class="px-6 py-3 font-medium">Status</th>
                             <th class="px-6 py-3 font-medium">Periode</th>
                             <th class="px-6 py-3 font-medium">PIC</th>
-                            <th class="px-6 py-3 text-right font-medium">Aksi</th>
+                            <th class="px-6 py-3 text-right font-medium">
+                                Aksi
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y">
@@ -212,10 +269,16 @@ function hapusProject(project: Project) {
                         >
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/10">
-                                        <FolderKanban class="h-4 w-4 text-blue-500" />
+                                    <div
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/10"
+                                    >
+                                        <FolderKanban
+                                            class="h-4 w-4 text-blue-500"
+                                        />
                                     </div>
-                                    <span class="font-medium">{{ project.nama }}</span>
+                                    <span class="font-medium">{{
+                                        project.nama
+                                    }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-muted-foreground">
@@ -230,13 +293,16 @@ function hapusProject(project: Project) {
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-muted-foreground">
-                                {{ formatTanggal(project.mulai) }} — {{ formatTanggal(project.selesai) }}
+                                {{ formatTanggal(project.mulai) }} —
+                                {{ formatTanggal(project.selesai) }}
                             </td>
                             <td class="px-6 py-4 text-muted-foreground">
                                 {{ project.pic }}
                             </td>
                             <td class="px-6 py-4">
-                                <div class="flex items-center justify-end gap-1">
+                                <div
+                                    class="flex items-center justify-end gap-1"
+                                >
                                     <Link
                                         :href="`/project/${project.id}`"
                                         class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -253,7 +319,8 @@ function hapusProject(project: Project) {
                                     </Link>
                                     <button
                                         type="button"
-                                        class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10"
+                                        :disabled="deletingId === project.id"
+                                        class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-rose-500/10"
                                         title="Hapus project"
                                         @click="hapusProject(project)"
                                     >
@@ -272,7 +339,8 @@ function hapusProject(project: Project) {
                 class="flex flex-col gap-3 border-t px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
             >
                 <p class="text-sm text-muted-foreground">
-                    Menampilkan {{ projects.from }}–{{ projects.to }} dari {{ projects.total }} project
+                    Menampilkan {{ projects.from }}–{{ projects.to }} dari
+                    {{ projects.total }} project
                 </p>
 
                 <div class="flex items-center gap-2">
@@ -301,8 +369,6 @@ function hapusProject(project: Project) {
                     </button>
                 </div>
             </div>
-
         </div>
-
     </div>
 </template>

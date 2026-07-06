@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ProjectController extends Controller
@@ -62,13 +63,12 @@ class ProjectController extends Controller
             'pic'       => ['required', 'string', 'max:255'],
             'teknologi' => ['nullable', 'string', 'max:255'],
             'status'    => ['required', 'in:aktif,selesai,ditunda,dibatalkan'],
-            'progres'   => ['required', 'integer', 'min:0', 'max:100'], // dari frontend
+            'progres'   => ['required', 'integer', 'min:0', 'max:100'],
             'mulai'     => ['required', 'date'],
             'selesai'   => ['nullable', 'date', 'after_or_equal:mulai'],
         ]);
 
-        // mapping: field frontend "progres" -> kolom database "progress"
-        $validated['progress'] = $validated['progres'];
+        $validated['progress'] = $validated['progres'] ?? 0;
         unset($validated['progres']);
 
         if ($request->hasFile('gambar')) {
@@ -78,8 +78,13 @@ class ProjectController extends Controller
         Project::create($validated);
 
         return redirect()
-            ->route('project.index')
-            ->with('success', 'Project berhasil ditambahkan.');
+            ->route('project')
+            ->with('flash', [
+                'toast' => [
+                    'type' => 'success',
+                    'message' => 'Project berhasil ditambahkan.',
+                ],
+            ]);
     }
 
     /**
@@ -109,8 +114,21 @@ class ProjectController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Project $project)
+    public function destroy(Project $project): RedirectResponse
     {
-        //
+        if ($project->gambar && Storage::disk('public')->exists($project->gambar)) {
+            Storage::disk('public')->delete($project->gambar);
+        }
+
+        $project->delete();
+
+        return redirect()
+            ->route('project')
+            ->with('flash', [
+                'toast' => [
+                    'type' => 'success',
+                    'message' => 'Project berhasil dihapus.',
+                ],
+            ]);
     }
 }

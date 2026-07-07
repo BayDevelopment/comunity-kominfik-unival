@@ -13,7 +13,7 @@ import {
     Gauge,
     X,
 } from '@lucide/vue';
-import { ref } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
 import { dashboard } from '@/routes';
 
 defineOptions({
@@ -28,61 +28,104 @@ defineOptions({
                 href: '/project',
             },
             {
-                title: 'Tambah Project',
-                href: '/project/create',
+                title: 'Edit Project',
+                href: '/project/edit',
             },
         ],
     },
 });
 
+interface Project {
+    id: number;
+    nama: string;
+    gambar: string | null;
+    deskripsi: string | null;
+    klien: string | null;
+    pic: string | null;
+    teknologi: string | null;
+    status: 'aktif' | 'selesai' | 'ditunda' | 'dibatalkan';
+    progress: number;
+    mulai: string | null;
+    selesai: string | null;
+}
+
+const props = defineProps<{
+    project: Project;
+}>();
+
 interface ProjectForm {
-    nama: string
-    gambar: File | null
-    deskripsi: string
-    klien: string
-    pic: string
-    teknologi: string
-    status: 'aktif' | 'selesai' | 'ditunda' | 'dibatalkan'
-    project_progress: number
-    mulai: string
-    selesai: string
+    nama: string;
+    gambar: File | null;
+    deskripsi: string;
+    klien: string;
+    pic: string;
+    teknologi: string;
+    status: 'aktif' | 'selesai' | 'ditunda' | 'dibatalkan';
+
+    // Hindari konflik dengan useForm().progress
+    project_progress: number;
+
+    mulai: string;
+    selesai: string;
+    hapus_gambar: boolean;
+}
+
+function toDateInput(value: string | null): string {
+    return value ? value.slice(0, 10) : '';
 }
 
 const form = useForm<ProjectForm>({
-    nama: '',
+    nama: props.project.nama ?? '',
     gambar: null,
-    deskripsi: '',
-    klien: '',
-    pic: '',
-    teknologi: '',
-    status: 'aktif',
-    project_progress: 0,
-    mulai: '',
-    selesai: '',
+    deskripsi: props.project.deskripsi ?? '',
+    klien: props.project.klien ?? '',
+    pic: props.project.pic ?? '',
+    teknologi: props.project.teknologi ?? '',
+    status: props.project.status ?? 'aktif',
+
+    project_progress: props.project.progress ?? 0,
+
+    mulai: toDateInput(props.project.mulai),
+    selesai: toDateInput(props.project.selesai),
+    hapus_gambar: false,
 });
 
-const preview = ref<string | null>(null);
+const preview = ref<string | null>(props.project.gambar ?? null);
+
+function isBlobPreview(url: string | null): boolean {
+    return !!url && url.startsWith('blob:');
+}
 
 function onFileChange(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
+
     form.gambar = file;
 
-    if (preview.value) {
+    if (isBlobPreview(preview.value) && preview.value !== null) {
         URL.revokeObjectURL(preview.value);
     }
 
-    preview.value = file ? URL.createObjectURL(file) : null;
+    preview.value = file ? URL.createObjectURL(file) : props.project.gambar;
+
+    if (file) {
+        form.hapus_gambar = false;
+    }
 }
 
 function removeImage() {
+    const hadServerImage = !isBlobPreview(preview.value) && !!preview.value;
 
     form.gambar = null;
 
-    if (preview.value) {
+    if (isBlobPreview(preview.value) && preview.value) {
         URL.revokeObjectURL(preview.value);
     }
 
     preview.value = null;
+
+    if (hadServerImage) {
+        form.hapus_gambar = true;
+    }
 
     const input = document.getElementById('gambar') as HTMLInputElement | null;
 
@@ -90,6 +133,12 @@ function removeImage() {
         input.value = '';
     }
 }
+
+onBeforeUnmount(() => {
+    if (isBlobPreview(preview.value) && preview.value !== null) {
+        URL.revokeObjectURL(preview.value);
+    }
+});
 
 function submit() {
     form
@@ -101,11 +150,13 @@ function submit() {
             pic: data.pic,
             teknologi: data.teknologi,
             status: data.status,
-            progress: data.project_progress, // dikirim sesuai nama kolom database
-            mulai: data.mulai || null,
-            selesai: data.selesai || null,
+            progress: data.project_progress,
+            mulai: data.mulai,
+            selesai: data.selesai,
+            hapus_gambar: data.hapus_gambar,
+            _method: 'put',
         }))
-        .post('/project', {
+        .post(`/project/${props.project.id}`, {
             preserveScroll: true,
             forceFormData: true,
         });
@@ -114,27 +165,16 @@ function submit() {
 
 <template>
 
-    <Head title="Tambah Project" />
+    <Head title="Edit Project" />
 
-    <div class="space-y-6 p-6">
-
-        <!-- Header -->
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-bold">
-                    Tambah Project
-                </h1>
-
-                <p class="text-sm text-muted-foreground">
-                    Lengkapi detail project baru di bawah ini.
-                </p>
-            </div>
-
+    <div class="container mx-auto max-w-4xl py-6">
+        <div class="mb-6 flex items-center gap-4">
             <Link href="/project"
-                class="inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted">
+                class="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                 <ArrowLeft class="h-4 w-4" />
                 Kembali
             </Link>
+            <h1 class="text-2xl font-bold">Edit Project</h1>
         </div>
 
         <!-- Form Card -->
@@ -154,7 +194,6 @@ function submit() {
             </div>
 
             <div class="grid gap-5 px-6 py-6 sm:grid-cols-2">
-
                 <!-- Gambar Project -->
                 <div class="sm:col-span-2">
                     <label for="gambar" class="mb-1.5 block text-sm font-medium">
@@ -278,15 +317,20 @@ function submit() {
 
                 <!-- Progress -->
                 <div>
-                    <label for="progres" class="mb-1.5 flex items-center justify-between text-sm font-medium">
+                    <label for="project_progress" class="mb-1.5 flex items-center justify-between text-sm font-medium">
                         <span class="flex items-center gap-1.5">
                             <Gauge class="h-4 w-4 text-muted-foreground" />
                             Progress
                         </span>
-                        <span class="text-muted-foreground">{{ form.project_progress }}%</span>
+
+                        <span class="text-muted-foreground">
+                            {{ form.project_progress }}%
+                        </span>
                     </label>
-                    <input id="progres" v-model.number="form.project_progress" type="range" min="0" max="100" step="5"
-                        class="w-full accent-primary" />
+
+                    <input id="project_progress" v-model.number="form.project_progress" type="range" min="0" max="100"
+                        step="5" class="w-full accent-primary" />
+
                     <p v-if="form.errors.project_progress" class="mt-1.5 text-xs text-rose-600 dark:text-rose-400">
                         {{ form.errors.project_progress }}
                     </p>
@@ -342,7 +386,6 @@ function submit() {
                         {{ form.errors.deskripsi }}
                     </p>
                 </div>
-
             </div>
 
             <!-- Footer Actions -->
@@ -355,10 +398,9 @@ function submit() {
                 <button type="submit" :disabled="form.processing"
                     class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-60">
                     <Save class="h-4 w-4" />
-                    {{ form.processing ? 'Menyimpan...' : 'Simpan Project' }}
+                    {{ form.processing ? 'Menyimpan...' : 'Update Project' }}
                 </button>
             </div>
         </form>
-
     </div>
 </template>

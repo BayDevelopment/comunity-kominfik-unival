@@ -56,20 +56,17 @@ class ProjectController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'nama'      => ['required', 'string', 'max:255'],
-            'gambar'    => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-            'deskripsi' => ['nullable', 'string'],
-            'klien'     => ['required', 'string', 'max:255'],
-            'pic'       => ['required', 'string', 'max:255'],
-            'teknologi' => ['nullable', 'string', 'max:255'],
-            'status'    => ['required', 'in:aktif,selesai,ditunda,dibatalkan'],
-            'progres'   => ['required', 'integer', 'min:0', 'max:100'],
-            'mulai'     => ['required', 'date'],
-            'selesai'   => ['nullable', 'date', 'after_or_equal:mulai'],
+            'nama'       => ['required', 'string', 'max:255'],
+            'gambar'     => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'deskripsi'  => ['nullable', 'string'],
+            'klien'      => ['nullable', 'string', 'max:255'],
+            'pic'        => ['nullable', 'string', 'max:255'],
+            'teknologi'  => ['nullable', 'string'],
+            'status'     => ['required', 'in:aktif,selesai,ditunda,dibatalkan'],
+            'progress'   => ['required', 'integer', 'min:0', 'max:100'],
+            'mulai'      => ['nullable', 'date'],
+            'selesai'    => ['nullable', 'date', 'after_or_equal:mulai'],
         ]);
-
-        $validated['progress'] = $validated['progres'] ?? 0;
-        unset($validated['progres']);
 
         if ($request->hasFile('gambar')) {
             $validated['gambar'] = $request->file('gambar')->store('project', 'public');
@@ -100,15 +97,66 @@ class ProjectController extends Controller
      */
     public function edit(Project $project)
     {
-        //
+        return Inertia::render('project/edit', [
+            'project' => [
+                ...$project->toArray(),
+                'gambar' => $project->gambar
+                    ? asset('storage/' . $project->gambar)
+                    : null,
+            ],
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Project $project)
+    public function update(Request $request, Project $project): RedirectResponse
     {
-        //
+        $validated = $request->validate([
+            'nama'          => ['required', 'string', 'max:255'],
+            'gambar'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'deskripsi'     => ['nullable', 'string'],
+            'klien'         => ['nullable', 'string', 'max:255'],
+            'pic'           => ['nullable', 'string', 'max:255'],
+            'teknologi'     => ['nullable', 'string'],
+            'status'        => ['required', 'in:aktif,selesai,ditunda,dibatalkan'],
+            'progress'      => ['required', 'integer', 'min:0', 'max:100'],
+            'mulai'         => ['nullable', 'date'],
+            'selesai'       => ['nullable', 'date', 'after_or_equal:mulai'],
+            'hapus_gambar'  => ['nullable', 'boolean'],
+        ]);
+
+        if ($request->hasFile('gambar')) {
+
+            if ($project->gambar && Storage::disk('public')->exists($project->gambar)) {
+                Storage::disk('public')->delete($project->gambar);
+            }
+
+            $validated['gambar'] = $request->file('gambar')->store('project', 'public');
+        } elseif ($request->boolean('hapus_gambar')) {
+
+            if ($project->gambar && Storage::disk('public')->exists($project->gambar)) {
+                Storage::disk('public')->delete($project->gambar);
+            }
+
+            $validated['gambar'] = null;
+        } else {
+
+            unset($validated['gambar']);
+        }
+
+        unset($validated['hapus_gambar']);
+
+        $project->update($validated);
+
+        return redirect()
+            ->route('project')
+            ->with('flash', [
+                'toast' => [
+                    'type' => 'success',
+                    'message' => 'Project berhasil diperbarui.',
+                ],
+            ]);
     }
 
     /**

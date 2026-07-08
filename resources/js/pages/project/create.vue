@@ -176,7 +176,7 @@ function submit() {
                         :class="{ 'border-rose-500/50': form.errors.gambar }">
                         <ImageIcon class="h-6 w-6 text-muted-foreground" />
                         <span class="text-sm text-muted-foreground">
-                            Klik untuk memilih gambar (JPG, PNG, WEBP, maks 2MB)
+                            Klik untuk memilih gambar (JPG, PNG, maks 1MB)
                         </span>
                     </label>
 

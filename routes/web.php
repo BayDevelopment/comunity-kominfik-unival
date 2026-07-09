@@ -29,6 +29,9 @@ Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     // anggota routes
     Route::get('/anggota', [AnggotaController::class, 'index'])
         ->name('anggota');
+    Route::get('/anggota/create', [AnggotaController::class, 'create'])->name('anggota.create');
+    Route::post('/anggota', [AnggotaController::class, 'store'])->name('anggota.store');
+    Route::delete('/anggota/{id}', [AnggotaController::class, 'destroy'])->name('anggota.destroy');
 
     // layanan routes
     Route::get('/layanan', [LayananController::class, 'index'])

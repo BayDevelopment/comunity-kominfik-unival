@@ -24,4 +24,12 @@ class Anggota extends Model
     protected $casts = [
         'tanggal_bergabung' => 'date',
     ];
+
+    public function getFotoUrlAttribute()
+    {
+        if ($this->foto) {
+            return asset('storage/' . $this->foto);
+        }
+        return null;
+    }
 }

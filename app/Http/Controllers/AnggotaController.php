@@ -119,7 +119,14 @@ class AnggotaController extends Controller
      */
     public function show(Anggota $anggota)
     {
-        //
+        return Inertia::render('anggota/view', [
+            'anggota' => [
+                ...$anggota->toArray(),
+                'foto_url' => $anggota->foto
+                    ? asset('storage/' . $anggota->foto)
+                    : null,
+            ],
+        ]);
     }
 
     /**
@@ -127,7 +134,14 @@ class AnggotaController extends Controller
      */
     public function edit(Anggota $anggota)
     {
-        //
+        return Inertia::render('anggota/edit', [
+            'anggota' => [
+                ...$anggota->toArray(),
+                'foto_url' => $anggota->foto
+                    ? asset('storage/' . $anggota->foto)
+                    : null,
+            ],
+        ]);
     }
 
     /**
@@ -135,7 +149,53 @@ class AnggotaController extends Controller
      */
     public function update(Request $request, Anggota $anggota)
     {
-        //
+        if (!Auth::user()->can('update-anggota')) {
+            abort(403, 'Anda tidak memiliki akses!');
+        }
+
+        // VALIDASI
+        $validated = $request->validate([
+            'nama' => 'required|string|max:255',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:1024',
+            'email' => 'required|email|max:255|unique:anggotas,email,' . $anggota->id,
+            'no_telepon' => 'required|string|max:20|regex:/^[0-9+\-\s()]+$/',
+            'jabatan' => 'required|string|max:255',
+            'divisi' => 'required|string|max:255',
+            'alamat' => 'nullable|string',
+            'tanggal_bergabung' => 'required|date|before_or_equal:today',
+            'status' => 'required|in:aktif,tidak_aktif,cuti',
+        ], [
+            'email.unique' => 'Email sudah terdaftar!',
+            'foto.max' => 'Ukuran foto maksimal 1MB!',
+            'foto.mimes' => 'Format foto harus JPG, PNG!',
+            'no_telepon.regex' => 'Format nomor telepon tidak valid!',
+            'tanggal_bergabung.before_or_equal' => 'Tanggal bergabung tidak boleh di masa depan!',
+        ]);
+
+        // UPDATE FOTO (JIKA ADA)
+        if ($request->hasFile('foto')) {
+            if ($anggota->foto && Storage::disk('public')->exists($anggota->foto)) {
+                Storage::disk('public')->delete($anggota->foto);
+            }
+
+            $file = $request->file('foto');
+            $filename = time() . '_' . Str::slug($request->nama) . '.' . $file->getClientOriginalExtension();
+            $fotoPath = $file->storeAs('anggota/foto', $filename, 'public');
+            $validated['foto'] = $fotoPath;
+        }
+
+        // UPDATE DATA
+        $anggota->update($validated);
+
+        // REDIRECT
+        return redirect()
+            ->route('anggota')
+            ->with('flash', [
+                'toast' => [
+                    'type' => 'success',
+                    'message' => 'Anggota "' . $anggota->nama . '" berhasil diupdate!',
+                ],
+            ]);
     }
 
     /**

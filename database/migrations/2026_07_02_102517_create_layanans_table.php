@@ -9,7 +9,7 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-     public function up(): void
+    public function up(): void
     {
         Schema::create('layanans', function (Blueprint $table) {
             $table->id();
@@ -17,9 +17,9 @@ return new class extends Migration
             $table->string('gambar')->nullable();
             $table->string('kategori')->nullable();
             $table->text('deskripsi')->nullable();
-            $table->text('syarat')->nullable();
+            $table->json('syarat')->nullable();
             $table->string('estimasi_waktu')->nullable();
-            $table->string('biaya')->nullable();
+            $table->integer('biaya')->nullable();
             $table->enum('status', ['aktif', 'nonaktif'])->default('aktif');
             $table->timestamps();
         });

@@ -19,4 +19,23 @@ class Layanan extends Model
         'biaya',
         'status',
     ];
+
+    protected $casts = [
+        'biaya' => 'integer',
+        'syarat' => 'array',
+    ];
+
+
+    public function getBiayaFormattedAttribute()
+    {
+        if ($this->biaya) {
+            return 'Rp ' . number_format($this->biaya, 0, ',', '.');
+        }
+        return null;
+    }
+
+    public function getGambarUrlAttribute()
+    {
+        return $this->gambar ? asset('storage/' . $this->gambar) : null;
+    }
 }

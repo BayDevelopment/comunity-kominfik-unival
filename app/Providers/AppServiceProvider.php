@@ -53,11 +53,29 @@ class AppServiceProvider extends ServiceProvider
 
     protected function configureGates(): void
     {
+        // anggota
         Gate::define('create-anggota', function ($user) {
             return in_array($user->role, ['academy']);
         });
 
+        Gate::define('update-anggota', function ($user) {
+            return in_array($user->role, ['academy']);
+        });
+
         Gate::define('delete-anggota', function ($user) {
+            return in_array($user->role, ['academy']);
+        });
+
+        // layanan
+        Gate::define('create-layanan', function ($user) {
+            return in_array($user->role, ['academy']);
+        });
+
+        Gate::define('update-layanan', function ($user) {
+            return in_array($user->role, ['academy']);
+        });
+
+        Gate::define('delete-layanan', function ($user) {
             return in_array($user->role, ['academy']);
         });
     }

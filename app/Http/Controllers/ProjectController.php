@@ -134,7 +134,7 @@ class ProjectController extends Controller
         return Inertia::render('project/edit', [
             'project' => [
                 ...$project->toArray(),
-                'gambar_url' => $project->gambar
+                'gambar' => $project->gambar
                     ? asset('storage/' . $project->gambar)
                     : null,
             ],

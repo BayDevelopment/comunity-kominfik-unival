@@ -27,15 +27,29 @@ Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     Route::delete('/project/{project}', [ProjectController::class, 'destroy'])->name('project.destroy');
 
     // anggota routes
-    Route::get('/anggota', [AnggotaController::class, 'index'])
-        ->name('anggota');
+    Route::get('/anggota', [AnggotaController::class, 'index'])->name('anggota');
     Route::get('/anggota/create', [AnggotaController::class, 'create'])->name('anggota.create');
     Route::post('/anggota', [AnggotaController::class, 'store'])->name('anggota.store');
-    Route::delete('/anggota/{id}', [AnggotaController::class, 'destroy'])->name('anggota.destroy');
+    Route::get('/anggota/{anggota}', [AnggotaController::class, 'show'])->name('anggota.show');
+    Route::get('/anggota/{anggota}/edit', [AnggotaController::class, 'edit'])->name('anggota.edit');
+    Route::put('/anggota/{anggota}', [AnggotaController::class, 'update'])->name('anggota.update');
+    Route::delete('/anggota/{anggota}', [AnggotaController::class, 'destroy'])->name('anggota.destroy');
 
     // layanan routes
     Route::get('/layanan', [LayananController::class, 'index'])
         ->name('layanan');
+    Route::get('/layanan/create', [LayananController::class, 'create'])
+        ->name('layanan.create');
+    Route::post('/layanan', [LayananController::class, 'store'])
+        ->name('layanan.store');
+    Route::get('/layanan/{layanan}', [LayananController::class, 'show'])
+        ->name('layanan.show');
+    Route::get('/layanan/{layanan}/edit', [LayananController::class, 'edit'])
+        ->name('layanan.edit');
+    Route::put('/layanan/{layanan}', [LayananController::class, 'update'])
+        ->name('layanan.update');
+    Route::delete('/layanan/{layanan}', [LayananController::class, 'destroy'])
+        ->name('layanan.destroy');
 });
 
 require __DIR__ . '/settings.php';

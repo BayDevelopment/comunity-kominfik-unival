@@ -12,7 +12,7 @@ import {
     Code2,
     Gauge,
     X,
-} from '@lucide/vue';
+} from 'lucide-vue-next';
 import { ref, onBeforeUnmount } from 'vue';
 import { dashboard } from '@/routes';
 
@@ -61,17 +61,10 @@ interface ProjectForm {
     pic: string;
     teknologi: string;
     status: 'aktif' | 'selesai' | 'ditunda' | 'dibatalkan';
-
-    // Hindari konflik dengan useForm().progress
-    project_progress: number;
-
+    project_progress: number; // Gunakan project_progress di form
     mulai: string;
     selesai: string;
     hapus_gambar: boolean;
-}
-
-function toDateInput(value: string | null): string {
-    return value ? value.slice(0, 10) : '';
 }
 
 const form = useForm<ProjectForm>({
@@ -82,13 +75,15 @@ const form = useForm<ProjectForm>({
     pic: props.project.pic ?? '',
     teknologi: props.project.teknologi ?? '',
     status: props.project.status ?? 'aktif',
-
-    project_progress: props.project.progress ?? 0,
-
-    mulai: toDateInput(props.project.mulai),
-    selesai: toDateInput(props.project.selesai),
+    project_progress: props.project.progress ?? 0, // Ambil dari props.project.progress
+    mulai: props.project.mulai ? props.project.mulai.slice(0, 10) : '',
+    selesai: props.project.selesai ? props.project.selesai.slice(0, 10) : '',
     hapus_gambar: false,
 });
+
+// Debug
+console.log('📊 Progress dari props:', props.project.progress);
+console.log('📊 Project_progress di form:', form.project_progress);
 
 const preview = ref<string | null>(props.project.gambar ?? null);
 
@@ -97,30 +92,32 @@ function isBlobPreview(url: string | null): boolean {
 }
 
 function onFileChange(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
-
-    form.gambar = file;
-
-    if (isBlobPreview(preview.value) && preview.value !== null) {
-        URL.revokeObjectURL(preview.value);
-    }
-
-    preview.value = file ? URL.createObjectURL(file) : props.project.gambar;
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0] ?? null;
 
     if (file) {
+        form.gambar = file;
         form.hapus_gambar = false;
+
+        if (isBlobPreview(preview.value) && preview.value !== null) {
+            URL.revokeObjectURL(preview.value);
+        }
+
+        preview.value = URL.createObjectURL(file);
+    } else {
+        form.gambar = null;
+        preview.value = props.project.gambar ?? null;
     }
 }
 
 function removeImage() {
     const hadServerImage = !isBlobPreview(preview.value) && !!preview.value;
 
-    form.gambar = null;
-
-    if (isBlobPreview(preview.value) && preview.value) {
+    if (isBlobPreview(preview.value) && preview.value !== null) {
         URL.revokeObjectURL(preview.value);
     }
 
+    form.gambar = null;
     preview.value = null;
 
     if (hadServerImage) {
@@ -141,25 +138,23 @@ onBeforeUnmount(() => {
 });
 
 function submit() {
-    form
-        .transform((data) => ({
-            nama: data.nama,
-            gambar: data.gambar,
-            deskripsi: data.deskripsi,
-            klien: data.klien,
-            pic: data.pic,
-            teknologi: data.teknologi,
-            status: data.status,
-            progress: data.project_progress,
-            mulai: data.mulai,
-            selesai: data.selesai,
-            hapus_gambar: data.hapus_gambar,
-            _method: 'put',
-        }))
-        .post(`/project/${props.project.id}`, {
-            preserveScroll: true,
-            forceFormData: true,
-        });
+    form.transform((data) => ({
+        _method: 'put',
+        nama: data.nama,
+        gambar: data.gambar,
+        deskripsi: data.deskripsi,
+        klien: data.klien,
+        pic: data.pic,
+        teknologi: data.teknologi,
+        status: data.status,
+        progress: data.project_progress, // PERBAIKAN: kirim project_progress sebagai progress
+        mulai: data.mulai,
+        selesai: data.selesai,
+        hapus_gambar: data.hapus_gambar,
+    })).post(`/project/${props.project.id}`, {
+        preserveScroll: true,
+        forceFormData: true,
+    });
 }
 </script>
 
@@ -317,19 +312,18 @@ function submit() {
 
                 <!-- Progress -->
                 <div>
-                    <label for="project_progress" class="mb-1.5 flex items-center justify-between text-sm font-medium">
+                    <label class="mb-1.5 flex items-center justify-between text-sm font-medium">
                         <span class="flex items-center gap-1.5">
                             <Gauge class="h-4 w-4 text-muted-foreground" />
                             Progress
                         </span>
-
                         <span class="text-muted-foreground">
                             {{ form.project_progress }}%
                         </span>
                     </label>
 
-                    <input id="project_progress" v-model.number="form.project_progress" type="range" min="0" max="100"
-                        step="5" class="w-full accent-primary" />
+                    <input v-model.number="form.project_progress" type="range" min="0" max="100" step="5"
+                        class="w-full accent-primary" />
 
                     <p v-if="form.errors.project_progress" class="mt-1.5 text-xs text-rose-600 dark:text-rose-400">
                         {{ form.errors.project_progress }}

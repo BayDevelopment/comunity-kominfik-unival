@@ -4,7 +4,11 @@ use App\Http\Controllers\AnggotaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LayananController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\SecurityController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 Route::inertia('/', 'Home')->name('home');
 
@@ -17,6 +21,7 @@ Route::inertia('/kerjasama', 'Kerjasama')->name('kerjasama');
 Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+
     // Project Routes
     Route::get('/project', [ProjectController::class, 'index'])->name('project');
     Route::get('/project/create', [ProjectController::class, 'create'])->name('project.create');
@@ -26,7 +31,7 @@ Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     Route::put('/project/{project}', [ProjectController::class, 'update'])->name('project.update');
     Route::delete('/project/{project}', [ProjectController::class, 'destroy'])->name('project.destroy');
 
-    // anggota routes
+    // Anggota routes
     Route::get('/anggota', [AnggotaController::class, 'index'])->name('anggota');
     Route::get('/anggota/create', [AnggotaController::class, 'create'])->name('anggota.create');
     Route::post('/anggota', [AnggotaController::class, 'store'])->name('anggota.store');
@@ -35,22 +40,38 @@ Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     Route::put('/anggota/{anggota}', [AnggotaController::class, 'update'])->name('anggota.update');
     Route::delete('/anggota/{anggota}', [AnggotaController::class, 'destroy'])->name('anggota.destroy');
 
-    // layanan routes
-    Route::get('/layanan', [LayananController::class, 'index'])
-        ->name('layanan');
-    Route::get('/layanan/create', [LayananController::class, 'create'])
-        ->name('layanan.create');
-    Route::post('/layanan', [LayananController::class, 'store'])
-        ->name('layanan.store');
-    Route::get('/layanan/{layanan}', [LayananController::class, 'show'])
-        ->name('layanan.show');
-    Route::get('/layanan/{layanan}/edit', [LayananController::class, 'edit'])
-        ->name('layanan.edit');
-    Route::put('/layanan/{layanan}', [LayananController::class, 'update'])
-        ->name('layanan.update');
-    Route::delete('/layanan/{layanan}', [LayananController::class, 'destroy'])
-        ->name('layanan.destroy');
+    // Layanan routes
+    Route::get('/layanan', [LayananController::class, 'index'])->name('layanan');
+    Route::get('/layanan/create', [LayananController::class, 'create'])->name('layanan.create');
+    Route::post('/layanan', [LayananController::class, 'store'])->name('layanan.store');
+    Route::get('/layanan/{layanan}', [LayananController::class, 'show'])->name('layanan.show');
+    Route::get('/layanan/{layanan}/edit', [LayananController::class, 'edit'])->name('layanan.edit');
+    Route::put('/layanan/{layanan}', [LayananController::class, 'update'])->name('layanan.update');
+    Route::delete('/layanan/{layanan}', [LayananController::class, 'destroy'])->name('layanan.destroy');
+
+    // Users
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::post('/users/{user}/resend-verification', [UserController::class, 'resendVerification'])
+        ->name('users.resend-verification');
+    Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+    // Settings
+    Route::redirect('settings', 'settings/profile');
+
+    // Profile
+    Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Appearance (murni client-side, tidak butuh controller)
+    Route::get('settings/appearance', function () {
+        return Inertia::render('settings/Appearance');
+    })->name('appearance.edit');
 });
 
 require __DIR__ . '/settings.php';
-// require __DIR__.'/auth.php';

@@ -30,15 +30,24 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        try {
+            $request->user()->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+            if ($request->user()->isDirty('email')) {
+                $request->user()->email_verified_at = null;
+            }
+
+            $request->user()->save();
+
+            Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
+        } catch (\Throwable $e) {
+            report($e); // log error asli buat debugging
+
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => __('Something went wrong. Please try again.'),
+            ]);
         }
-
-        $request->user()->save();
-
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
 
         return to_route('profile.edit');
     }
@@ -56,6 +65,8 @@ class ProfileController extends Controller
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Account deleted successfully.')]);
 
         return redirect('/');
     }

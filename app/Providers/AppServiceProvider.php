@@ -5,9 +5,14 @@ namespace App\Providers;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
+use Laravel\Fortify\Events\RecoveryCodesGenerated;
+use Laravel\Fortify\Events\TwoFactorAuthenticationConfirmed;
+use Laravel\Fortify\Events\TwoFactorAuthenticationDisabled;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +31,27 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureGates();
+
+        Event::listen(function (TwoFactorAuthenticationConfirmed $event) {
+            Inertia::flash('toast', [
+                'type' => 'success',
+                'message' => __('Two-factor authentication enabled.'),
+            ]);
+        });
+
+        Event::listen(function (TwoFactorAuthenticationDisabled $event) {
+            Inertia::flash('toast', [
+                'type' => 'success',
+                'message' => __('Two-factor authentication disabled.'),
+            ]);
+        });
+
+        Event::listen(function (RecoveryCodesGenerated $event) {
+            Inertia::flash('toast', [
+                'type' => 'success',
+                'message' => __('Recovery codes regenerated.'),
+            ]);
+        });
     }
 
     /**

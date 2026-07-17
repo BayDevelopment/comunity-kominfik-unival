@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import logoSrc from '@/images/logo-kominfik.png';
 
 const page = usePage();
 const mobileOpen = ref(false);
@@ -27,11 +28,7 @@ const navItems = [
         <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 lg:px-6">
             <!-- Brand -->
             <a href="#beranda" class="group flex items-center gap-3">
-                <div
-                    class="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-black text-white shadow-lg shadow-orange-500/25 transition duration-300 group-hover:-translate-y-0.5 group-hover:scale-105"
-                >
-                    K
-                </div>
+                <img :src="logoSrc" alt="Logo KOMINFIK" class="h-11 w-11" />
 
                 <div class="leading-tight">
                     <h1 class="text-lg font-black tracking-tight text-slate-900">

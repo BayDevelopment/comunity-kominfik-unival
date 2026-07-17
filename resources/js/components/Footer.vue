@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import logoSrc from '@/images/logo-kominfik.png';
 
 const currentYear = new Date().getFullYear();
 
@@ -33,10 +34,7 @@ const programLinks = [
                 <!-- Brand -->
                 <div class="lg:col-span-2">
                     <a href="#beranda" class="group inline-flex items-center gap-3">
-                        <div
-                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-base font-black text-white shadow-lg shadow-orange-500/25 transition duration-300 group-hover:-translate-y-0.5 group-hover:scale-105">
-                            K
-                        </div>
+                        <img :src="logoSrc" alt="Logo KOMINFIK" class="h-12 w-12" />
 
                         <div>
                             <h2 class="text-xl font-black tracking-tight text-white">

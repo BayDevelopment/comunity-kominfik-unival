@@ -6,6 +6,7 @@ import {
     FolderKanban,
     Users,
     Briefcase,
+    CalendarRange
 } from '@lucide/vue';
 
 import AppLogo from '@/components/AppLogo.vue';
@@ -21,8 +22,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-
 import { dashboard, project, anggota, layanan } from '@/routes';
+import * as periodePendaftaran from '@/routes/periode-pendaftaran';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -45,6 +46,11 @@ const mainNavItems: NavItem[] = [
         title: 'Layanan',
         href: layanan(),
         icon: Briefcase,
+    },
+    {
+        title: 'Periode',
+        href: periodePendaftaran.index(),
+        icon: CalendarRange,
     },
 ];
 

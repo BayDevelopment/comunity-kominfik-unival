@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\AnggotaController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\JoinController;
 use App\Http\Controllers\LayananController;
+use App\Http\Controllers\PeriodePendaftaranController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
@@ -15,7 +17,7 @@ Route::inertia('/', 'Home')->name('home');
 Route::inertia('/project', 'Project')->name('project');
 Route::inertia('/anggota', 'Anggota')->name('anggota');
 Route::inertia('/layanan', 'Layanan')->name('layanan');
-Route::inertia('/join', 'Join')->name('join');
+Route::get('/join', [JoinController::class, 'join']);
 Route::inertia('/kerjasama', 'Kerjasama')->name('kerjasama');
 
 Route::middleware(['auth', 'verified', 'academy'])->group(function () {
@@ -48,6 +50,17 @@ Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     Route::get('/layanan/{layanan}/edit', [LayananController::class, 'edit'])->name('layanan.edit');
     Route::put('/layanan/{layanan}', [LayananController::class, 'update'])->name('layanan.update');
     Route::delete('/layanan/{layanan}', [LayananController::class, 'destroy'])->name('layanan.destroy');
+
+    // Periode Pendaftaran routes
+    Route::get('/periode-pendaftaran', [PeriodePendaftaranController::class, 'index'])->name('periode-pendaftaran.index');
+    Route::get('/periode-pendaftaran/create', [PeriodePendaftaranController::class, 'create'])->name('periode-pendaftaran.create');
+    Route::post('/periode-pendaftaran', [PeriodePendaftaranController::class, 'store'])->name('periode-pendaftaran.store');
+    Route::get('/periode-pendaftaran/{periode}', [PeriodePendaftaranController::class, 'show'])->name('periode-pendaftaran.show');
+    Route::get('/periode-pendaftaran/{periode}/edit', [PeriodePendaftaranController::class, 'edit'])->name('periode-pendaftaran.edit');
+    Route::put('/periode-pendaftaran/{periode}', [PeriodePendaftaranController::class, 'update'])->name('periode-pendaftaran.update');
+    Route::patch('/periode-pendaftaran/{periode}/toggle-status', [PeriodePendaftaranController::class, 'toggleStatus'])
+        ->name('periode-pendaftaran.toggle-status');
+    Route::delete('/periode-pendaftaran/{periode}', [PeriodePendaftaranController::class, 'destroy'])->name('periode-pendaftaran.destroy');
 
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('users.index');

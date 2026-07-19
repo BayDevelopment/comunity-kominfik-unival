@@ -37,7 +37,7 @@ defineOptions({
 interface Project {
     id: number;
     nama: string;
-    gambar: string | null;
+    gambar_url: string | null;
     deskripsi: string | null;
     klien: string | null;
     pic: string | null;
@@ -141,7 +141,7 @@ function formatTeknologi(value: string | null): string[] {
                 <div class="sm:col-span-2">
                     <p class="mb-1.5 text-sm font-medium">Gambar Project</p>
 
-                    <img v-if="project.gambar" :src="project.gambar" :alt="project.nama"
+                    <img v-if="project.gambar_url" :src="project.gambar_url" :alt="project.nama"
                         class="h-48 w-full max-w-sm rounded-lg border object-cover" />
 
                     <div v-else

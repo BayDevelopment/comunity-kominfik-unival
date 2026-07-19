@@ -27,4 +27,11 @@ class Project extends Model
         'selesai' => 'date',
         'progress' => 'integer',
     ];
+
+    protected $appends = ['gambar_url'];
+
+    public function getGambarUrlAttribute(): ?string
+    {
+        return $this->gambar ? asset('storage/' . $this->gambar) : null;
+    }
 }

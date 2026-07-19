@@ -13,12 +13,30 @@ const user = computed(() => {
 });
 
 const navItems = [
-    { label: 'Beranda', href: '#beranda' },
-    { label: 'Project', href: '#project' },
-    { label: 'Anggota', href: '#anggota' },
-    { label: 'Layanan', href: '#layanan' },
-    { label: 'Kerjasama', href: '#kerjasama' },
+    { label: 'Beranda', id: 'beranda' },
+    { label: 'Project', id: 'project' },
+    { label: 'Anggota', id: 'anggota' },
+    { label: 'Layanan', id: 'layanan' },
+    { label: 'Kerjasama', id: 'kerjasama' },
 ];
+
+// Deteksi apakah kita sedang berada di homepage (path "/", tanpa memandang hash)
+const isHomePage = computed(() => page.url.split('#')[0] === '/');
+
+// Navigasi ke section:
+// - Kalau sudah di homepage -> smooth scroll di tempat (tetap SPA, tanpa reload)
+// - Kalau di halaman lain (mis. /join/anggota) -> balik ke homepage dulu + hash,
+//   supaya browser otomatis scroll ke section setelah halaman termuat
+function goToSection(id: string) {
+    mobileOpen.value = false;
+
+    if (isHomePage.value) {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+        history.pushState(null, '', `#${id}`);
+    } else {
+        window.location.href = `/#${id}`;
+    }
+}
 </script>
 
 <template>
@@ -27,7 +45,7 @@ const navItems = [
     >
         <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 lg:px-6">
             <!-- Brand -->
-            <a href="#beranda" class="group flex items-center gap-3">
+            <a href="#" class="group flex items-center gap-3" @click.prevent="goToSection('beranda')">
                 <img :src="logoSrc" alt="Logo KOMINFIK" class="h-11 w-11" />
 
                 <div class="leading-tight">
@@ -46,9 +64,10 @@ const navItems = [
             >
                 <a
                     v-for="item in navItems"
-                    :key="item.href"
-                    :href="item.href"
+                    :key="item.id"
+                    href="#"
                     class="rounded-xl px-4 py-2 text-sm font-bold text-slate-600 transition duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-orange-600 hover:shadow-sm hover:shadow-orange-200/60"
+                    @click.prevent="goToSection(item.id)"
                 >
                     {{ item.label }}
                 </a>
@@ -132,10 +151,10 @@ const navItems = [
                 <div class="space-y-2">
                     <a
                         v-for="item in navItems"
-                        :key="item.href"
-                        :href="item.href"
+                        :key="item.id"
+                        href="#"
                         class="block rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-orange-50 hover:text-orange-700"
-                        @click="mobileOpen = false"
+                        @click.prevent="goToSection(item.id)"
                     >
                         {{ item.label }}
                     </a>

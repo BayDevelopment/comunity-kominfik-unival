@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AnggotaController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JoinController;
 use App\Http\Controllers\LayananController;
 use App\Http\Controllers\PeriodePendaftaranController;
@@ -12,13 +13,26 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::inertia('/', 'Home')->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::inertia('/project', 'Project')->name('project');
 Route::inertia('/anggota', 'Anggota')->name('anggota');
 Route::inertia('/layanan', 'Layanan')->name('layanan');
+
 Route::get('/join', [JoinController::class, 'join']);
-Route::inertia('/kerjasama', 'Kerjasama')->name('kerjasama');
+
+
+Route::get('/join/anggota', [JoinController::class, 'anggota'])->name('join.anggota');
+Route::post('/join/anggota', [JoinController::class, 'storeAnggota'])
+    ->middleware('throttle:5,1')
+    ->name('join.anggota.store');
+
+Route::get('/join/kerjasama', [JoinController::class, 'kerjasamaUniversity'])->name('join.kerjasama.university');
+
+Route::post('/join/kerjasama', [JoinController::class, 'storeKerjasama'])
+    ->middleware('throttle:5,1')
+    ->name('join.kerjasama.university.store');
+
 
 Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])

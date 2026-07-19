@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
 import logoSrc from '@/images/logo-kominfik.png';
 
 const currentYear = new Date().getFullYear();
@@ -51,18 +50,6 @@ const programLinks = [
                         pengembangan skill, project teknologi, dan kerja sama bersama
                         perusahaan, organisasi, komunitas, maupun universitas.
                     </p>
-
-                    <div class="mt-6 flex flex-wrap gap-3">
-                        <Link href="/join"
-                            class="rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 px-5 py-3 text-sm font-black text-white shadow-lg shadow-orange-500/25 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-500/30">
-                            Join Sekarang
-                        </Link>
-
-                        <Link href="/kerjasama"
-                            class="rounded-2xl border border-orange-300/20 bg-white/5 px-5 py-3 text-sm font-black text-white transition duration-300 hover:-translate-y-0.5 hover:border-orange-300/40 hover:bg-orange-400/10 hover:text-orange-100">
-                            Ajukan Kerjasama
-                        </Link>
-                    </div>
                 </div>
 
                 <!-- Navigation -->
@@ -108,7 +95,7 @@ const programLinks = [
                             Bangun project digital bersama KOMINFIK.
                         </p>
 
-                        <a href="#kerjasama"
+                        <a href="/join/kerjasama"
                             class="mt-4 inline-flex items-center gap-2 text-sm font-black text-orange-300 transition hover:gap-3 hover:text-orange-200">
                             Mulai sekarang
                             <span>→</span>
@@ -125,9 +112,8 @@ const programLinks = [
                 </p>
 
                 <p class="font-medium text-slate-500">
-                    Built with
-                    <span class="font-bold text-orange-300">passion</span>
-                    for digital collaboration.
+                    Developed by
+                    <span class="font-bold text-orange-300">Bayu Albar Ladici</span>
                 </p>
             </div>
         </div>

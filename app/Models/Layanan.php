@@ -26,11 +26,14 @@ class Layanan extends Model
     ];
 
 
+    protected $appends = ['gambar_url', 'biaya_formatted'];
+
     public function getBiayaFormattedAttribute()
     {
         if ($this->biaya) {
             return 'Rp ' . number_format($this->biaya, 0, ',', '.');
         }
+
         return null;
     }
 

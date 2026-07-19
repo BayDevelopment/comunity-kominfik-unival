@@ -2,7 +2,6 @@
 import { Link } from '@inertiajs/vue3';
 import {
     ArrowRight,
-    Building2,
     CalendarRange,
     GraduationCap,
     UserPlus,
@@ -56,7 +55,7 @@ const options = computed(() => {
                 'Workshop & seminar teknologi',
             ],
             icon: GraduationCap,
-            href: '/join/kerjasama/university',
+            href: '/join/kerjasama',
             cta: 'Ajukan kerjasama',
             periode: periode,
         };
@@ -72,7 +71,7 @@ function formatDate(date: string | null): string {
     if (!date) {
         return '—';
     }
-    
+
     return new Date(date).toLocaleDateString('id-ID', {
         day: 'numeric',
         month: 'short',
@@ -172,29 +171,6 @@ function formatDate(date: string | null): string {
                             Pendaftaran Ditutup
                         </div>
                     </article>
-                </div>
-
-                <!-- Bottom Info -->
-                <div
-                    class="mx-auto mt-10 flex max-w-7xl flex-col gap-3 rounded-3xl border border-orange-100 bg-orange-50/60 p-6 shadow-sm shadow-orange-100/60 md:flex-row md:items-center md:justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-orange-600">
-                            <Building2 class="h-5 w-5" stroke-width="2.4" />
-                        </div>
-                        <div>
-                            <p class="text-sm font-black text-slate-950">
-                                Mewakili perusahaan atau organisasi lain?
-                            </p>
-                            <p class="mt-1 text-sm text-slate-500">
-                                Kami juga terbuka untuk kerjasama di luar universitas dan sekolah.
-                            </p>
-                        </div>
-                    </div>
-
-                    <Link href="/kerjasama"
-                        class="inline-flex shrink-0 items-center justify-center rounded-2xl border border-orange-200 bg-white px-5 py-3 text-sm font-black text-orange-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-orange-50">
-                        Ajukan Kerjasama Lainnya
-                    </Link>
                 </div>
             </section>
         </main>

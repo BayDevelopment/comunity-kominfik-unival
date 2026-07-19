@@ -269,15 +269,215 @@ class LayananController extends Controller
      */
     public function edit(Layanan $layanan)
     {
-        //
+        return Inertia::render('layanan/edit', [
+            'layanan' => $layanan,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Layanan $layanan)
+    public function update(Request $request, Layanan $layanan): RedirectResponse
     {
-        //
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        if (!$user->can('update-layanan')) {
+            abort(403, 'Anda tidak memiliki izin untuk mengubah layanan.');
+        }
+
+        // 2. VALIDASI INPUT
+        $validated = $request->validate([
+            'nama' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z0-9\s\-\_\.\&\(\)\:\/]+$/'
+            ],
+            'gambar' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:2048',
+                'dimensions:min_width=100,min_height=100,max_width=4000,max_height=4000',
+            ],
+            'hapus_gambar' => [
+                'nullable',
+                'boolean',
+            ],
+            'kategori' => [
+                'nullable',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z0-9\s\-\_\.]+$/'
+            ],
+            'deskripsi' => [
+                'nullable',
+                'string',
+                'max:5000'
+            ],
+            'syarat' => [
+                'nullable',
+                'array',
+            ],
+            'syarat.*' => [
+                'string',
+                'max:255',
+            ],
+            'estimasi_waktu' => [
+                'nullable',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z0-9\s\-\_\.\,]+$/'
+            ],
+            'biaya' => [
+                'nullable',
+                'string',
+                'max:255',
+                'regex:/^[0-9,\.\s]+$/'
+            ],
+            'status' => [
+                'required',
+                Rule::in(['aktif', 'nonaktif'])
+            ],
+        ]);
+
+        // 3. SANITASI INPUT (Cegah XSS)
+        $validated['nama'] = strip_tags(trim($validated['nama']));
+        $validated['deskripsi'] = strip_tags(trim($validated['deskripsi'] ?? ''));
+
+        if (!empty($validated['syarat'])) {
+            $validated['syarat'] = array_map(
+                fn($item) => strip_tags(trim($item)),
+                $validated['syarat']
+            );
+        }
+
+        $validated['kategori'] = strip_tags(trim($validated['kategori'] ?? ''));
+        $validated['estimasi_waktu'] = strip_tags(trim($validated['estimasi_waktu'] ?? ''));
+
+        if (!empty($validated['biaya'])) {
+            $validated['biaya'] = preg_replace('/[^0-9]/', '', $validated['biaya']);
+            $validated['biaya'] = (int) $validated['biaya'];
+        }
+
+        $hapusGambar = $request->boolean('hapus_gambar');
+        unset($validated['hapus_gambar']);
+
+        $gambarLama = $layanan->gambar;
+        $gambarBaruDiupload = false;
+
+        DB::beginTransaction();
+
+        try {
+            if ($request->hasFile('gambar')) {
+                $file = $request->file('gambar');
+
+                if (!$file->isValid()) {
+                    throw new \Exception('File gambar tidak valid atau rusak.');
+                }
+
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mimeType = finfo_file($finfo, $file->getPathname());
+                finfo_close($finfo);
+
+                $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+                if (!in_array($mimeType, $allowedMimes)) {
+                    throw new \Exception('Tipe file tidak diizinkan. Hanya JPG, PNG, dan WEBP.');
+                }
+
+                if ($file->getSize() > 2 * 1024 * 1024) {
+                    throw new \Exception('Ukuran file melebihi batas maksimal 2MB.');
+                }
+
+                $extension = $file->getClientOriginalExtension();
+                $safeFilename = Str::uuid() . '.' . $extension;
+                $path = $file->storeAs('layanan', $safeFilename, 'public');
+
+                if (!$path) {
+                    throw new \Exception('Gagal mengupload gambar. Silakan coba lagi.');
+                }
+
+                $validated['gambar'] = $path;
+                $gambarBaruDiupload = true;
+            } elseif ($hapusGambar) {
+                $validated['gambar'] = null;
+            } else {
+                unset($validated['gambar']);
+            }
+
+            // 4. SIMPAN PERUBAHAN KE DATABASE
+            $layanan->update($validated);
+
+            // Hapus file gambar lama dari storage HANYA setelah update berhasil,
+            // dan HANYA jika memang ada gambar baru yang menggantikannya atau user minta dihapus
+            if (($gambarBaruDiupload || $hapusGambar) && $gambarLama && Storage::disk('public')->exists($gambarLama)) {
+                Storage::disk('public')->delete($gambarLama);
+            }
+
+            DB::commit();
+
+            Log::info('Layanan berhasil diperbarui', [
+                'layanan_id' => $layanan->id,
+                'nama' => $validated['nama'],
+                'user_id' => Auth::id() ?? 'guest',
+                'ip' => $request->ip(),
+            ]);
+
+            return redirect()
+                ->route('layanan')
+                ->with('flash', [
+                    'toast' => [
+                        'type' => 'success',
+                        'message' => 'Data layanan berhasil diperbarui.',
+                    ],
+                ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('flash', [
+                    'toast' => [
+                        'type' => 'error',
+                        'message' => 'Terjadi kesalahan validasi data. Silakan periksa kembali input Anda.',
+                    ],
+                ])
+                ->withErrors($e->errors());
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            // Kalau gambar baru sempat ter-upload tapi transaksi gagal,
+            // hapus file barunya saja (bukan gambar lama, karena update dibatalkan)
+            if ($gambarBaruDiupload && !empty($validated['gambar']) && Storage::disk('public')->exists($validated['gambar'])) {
+                Storage::disk('public')->delete($validated['gambar']);
+
+                Log::warning('File gambar baru dihapus karena terjadi error', [
+                    'file' => $validated['gambar'],
+                    'error' => $e->getMessage()
+                ]);
+            }
+
+            Log::error('Gagal memperbarui layanan', [
+                'layanan_id' => $layanan->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id() ?? 'guest',
+                'ip' => $request->ip(),
+                'data' => $request->except(['gambar']),
+            ]);
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('flash', [
+                    'toast' => [
+                        'type' => 'error',
+                        'message' => 'Gagal memperbarui layanan: ' . $e->getMessage(),
+                    ],
+                ]);
+        }
     }
 
     /**

@@ -25,11 +25,10 @@ class Anggota extends Model
         'tanggal_bergabung' => 'date',
     ];
 
-    public function getFotoUrlAttribute()
+    protected $appends = ['foto_url'];
+
+    public function getFotoUrlAttribute(): ?string
     {
-        if ($this->foto) {
-            return asset('storage/' . $this->foto);
-        }
-        return null;
+        return $this->foto ? asset('storage/' . $this->foto) : null;
     }
 }

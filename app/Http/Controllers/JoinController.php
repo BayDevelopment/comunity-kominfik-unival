@@ -91,11 +91,11 @@ class JoinController extends Controller
         PendaftaranAnggota::create($validated);
 
         return redirect()
-            ->route('project')
+            ->back()
             ->with('flash', [
                 'toast' => [
                     'type' => 'success',
-                    'message' => 'Pendaftaran anggota berhasil dikirim.',
+                    'message' => 'Pendaftaran anggota berhasil dikirim. Tim kami akan meninjau data kamu.',
                 ],
             ]);
     }
@@ -165,11 +165,11 @@ class JoinController extends Controller
         Kerjasama::create($validated);
 
         return redirect()
-            ->route('project')
+            ->back()
             ->with('flash', [
                 'toast' => [
                     'type' => 'success',
-                    'message' => 'Pengajuan kerjasama berhasil dikirim.',
+                    'message' => 'Pengajuan kerjasama berhasil dikirim. Tim kami akan meninjau pengajuan kamu.',
                 ],
             ]);
     }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PendaftaranAnggota extends Model
 {
@@ -29,7 +30,7 @@ class PendaftaranAnggota extends Model
         'tanggal_diproses' => 'datetime',
     ];
 
-    public function pemroses()
+    public function diprosesOleh(): BelongsTo
     {
         return $this->belongsTo(User::class, 'diproses_oleh');
     }

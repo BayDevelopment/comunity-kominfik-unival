@@ -172,7 +172,7 @@ class AnggotaController extends Controller
             'tanggal_bergabung.before_or_equal' => 'Tanggal bergabung tidak boleh di masa depan!',
         ]);
 
-        // UPDATE FOTO (JIKA ADA)
+        // UPDATE FOTO (JIKA ADA FILE BARU)
         if ($request->hasFile('foto')) {
             if ($anggota->foto && Storage::disk('public')->exists($anggota->foto)) {
                 Storage::disk('public')->delete($anggota->foto);
@@ -182,6 +182,9 @@ class AnggotaController extends Controller
             $filename = time() . '_' . Str::slug($request->nama) . '.' . $file->getClientOriginalExtension();
             $fotoPath = $file->storeAs('anggota/foto', $filename, 'public');
             $validated['foto'] = $fotoPath;
+        } else {
+            // ✅ TIDAK ada file baru → jangan sentuh kolom foto sama sekali
+            unset($validated['foto']);
         }
 
         // UPDATE DATA

@@ -5,6 +5,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JoinController;
 use App\Http\Controllers\LayananController;
+use App\Http\Controllers\PendaftaranAnggotaController;
+use App\Http\Controllers\PendaftaranKerjasamaController;
 use App\Http\Controllers\PeriodePendaftaranController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\Settings\ProfileController;
@@ -75,6 +77,28 @@ Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     Route::patch('/periode-pendaftaran/{periode}/toggle-status', [PeriodePendaftaranController::class, 'toggleStatus'])
         ->name('periode-pendaftaran.toggle-status');
     Route::delete('/periode-pendaftaran/{periode}', [PeriodePendaftaranController::class, 'destroy'])->name('periode-pendaftaran.destroy');
+
+   // Pendaftaran Anggota routes
+Route::get('/pendaftaran-anggota', [PendaftaranAnggotaController::class, 'index'])->name('pendaftaran-anggota.index');
+Route::get('/pendaftaran-anggota/create', [PendaftaranAnggotaController::class, 'create'])->name('pendaftaran-anggota.create');
+Route::post('/pendaftaran-anggota', [PendaftaranAnggotaController::class, 'store'])->name('pendaftaran-anggota.store');
+Route::get('/pendaftaran-anggota/{pendaftaranAnggota}', [PendaftaranAnggotaController::class, 'show'])->name('pendaftaran-anggota.show');
+Route::get('/pendaftaran-anggota/{pendaftaranAnggota}/edit', [PendaftaranAnggotaController::class, 'edit'])->name('pendaftaran-anggota.edit');
+Route::put('/pendaftaran-anggota/{pendaftaranAnggota}', [PendaftaranAnggotaController::class, 'update'])->name('pendaftaran-anggota.update');
+Route::patch('/pendaftaran-anggota/{pendaftaranAnggota}/terima', [PendaftaranAnggotaController::class, 'terima'])
+    ->name('pendaftaran-anggota.terima');
+Route::patch('/pendaftaran-anggota/{pendaftaranAnggota}/tolak', [PendaftaranAnggotaController::class, 'tolak'])
+    ->name('pendaftaran-anggota.tolak');
+Route::delete('/pendaftaran-anggota/{pendaftaranAnggota}', [PendaftaranAnggotaController::class, 'destroy'])->name('pendaftaran-anggota.destroy');
+
+    // Pendaftaran Kerjasama routes
+    Route::get('/pendaftaran-kerjasama', [PendaftaranKerjasamaController::class, 'index'])->name('pendaftaran-kerjasama.index');
+    Route::get('/pendaftaran-kerjasama/create', [PendaftaranKerjasamaController::class, 'create'])->name('pendaftaran-kerjasama.create');
+    Route::post('/pendaftaran-kerjasama', [PendaftaranKerjasamaController::class, 'store'])->name('pendaftaran-kerjasama.store');
+    Route::get('/pendaftaran-kerjasama/{pendaftaran}', [PendaftaranKerjasamaController::class, 'show'])->name('pendaftaran-kerjasama.show');
+    Route::get('/pendaftaran-kerjasama/{pendaftaran}/edit', [PendaftaranKerjasamaController::class, 'edit'])->name('pendaftaran-kerjasama.edit');
+    Route::put('/pendaftaran-kerjasama/{pendaftaran}', [PendaftaranKerjasamaController::class, 'update'])->name('pendaftaran-kerjasama.update');
+    Route::delete('/pendaftaran-kerjasama/{pendaftaran}', [PendaftaranKerjasamaController::class, 'destroy'])->name('pendaftaran-kerjasama.destroy');
 
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('users.index');

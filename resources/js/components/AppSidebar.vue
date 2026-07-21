@@ -6,8 +6,10 @@ import {
     FolderKanban,
     Users,
     Briefcase,
-    CalendarRange
-} from '@lucide/vue';
+    CalendarRange,
+    UserPlus,
+    Handshake,
+} from 'lucide-vue-next';
 
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
@@ -25,6 +27,8 @@ import {
 import { dashboard, project, anggota, layanan } from '@/routes';
 import * as periodePendaftaran from '@/routes/periode-pendaftaran';
 import type { NavItem } from '@/types';
+import * as pendaftaranAnggota from '@/routes/pendaftaran-anggota';
+import * as pendaftaranKerjasama from '@/routes/pendaftaran-kerjasama';
 
 const mainNavItems: NavItem[] = [
     {
@@ -51,6 +55,16 @@ const mainNavItems: NavItem[] = [
         title: 'Periode',
         href: periodePendaftaran.index(),
         icon: CalendarRange,
+    },
+    {
+        title: 'Pendaftaran Anggota',
+        href: pendaftaranAnggota.index(),
+        icon: UserPlus,
+    },
+    {
+        title: 'Kerjasama',
+        href: pendaftaranKerjasama.index(),
+        icon: Handshake,
     },
 ];
 
@@ -91,5 +105,4 @@ const footerNavItems: NavItem[] = [
             <NavUser />
         </SidebarFooter>
     </Sidebar>
-    <slot />
 </template>

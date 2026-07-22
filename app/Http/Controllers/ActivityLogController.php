@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -28,6 +29,19 @@ class ActivityLogController extends Controller
 
         return Inertia::render('ActivityLog/index', [
             'logs' => $logs,
+        ]);
+    }
+    public function destroyAll(): RedirectResponse
+    {
+        Activity::where('log_name', 'login')
+            ->where('causer_id', Auth::id())
+            ->delete();
+
+        return back()->with('flash', [
+            'toast' => [
+                'type' => 'success',
+                'message' => 'Riwayat login berhasil dihapus.',
+            ],
         ]);
     }
 }

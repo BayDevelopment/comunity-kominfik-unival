@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AnggotaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
@@ -167,7 +168,9 @@ Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     })->name('appearance.edit');
 
     // Activity Log
-    Route::get('/activity-log', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-log.index');
+    Route::delete('/activity-log', [ActivityLogController::class, 'destroyAll'])
+        ->name('activity-log.destroy-all');
+    Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
 });
 
 require __DIR__ . '/settings.php';

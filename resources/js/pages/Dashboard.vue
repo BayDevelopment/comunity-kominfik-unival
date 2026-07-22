@@ -175,7 +175,8 @@ const activityColor: Record<Activity['type'], string> = {
                 <div v-else class="flex h-80 items-end justify-between gap-3 px-2">
                     <div v-for="(label, index) in chart.labels" :key="label"
                         class="group flex h-full flex-1 flex-col items-center justify-end gap-2">
-                        <span class="text-xs font-semibold text-muted-foreground opacity-0 transition group-hover:opacity-100">
+                        <span
+                            class="text-xs font-semibold text-muted-foreground opacity-0 transition group-hover:opacity-100">
                             {{ chart.data[index] }}
                         </span>
 
@@ -206,11 +207,12 @@ const activityColor: Record<Activity['type'], string> = {
                 </div>
 
                 <!-- State kosong -->
-                <div v-if="!activities || activities.length === 0" class="rounded-lg border p-3 text-sm text-muted-foreground">
+                <div v-if="!activities || activities.length === 0"
+                    class="rounded-lg border p-3 text-sm text-muted-foreground">
                     Belum ada kegiatan terbaru.
                 </div>
 
-                <div v-else class="space-y-3">
+                <div v-else class="max-h-[400px] space-y-3 overflow-y-auto overscroll-contain pr-2">
                     <div v-for="(activity, index) in activities" :key="index"
                         class="flex items-start gap-3 rounded-lg border p-3">
                         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"

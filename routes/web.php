@@ -78,27 +78,69 @@ Route::middleware(['auth', 'verified', 'academy'])->group(function () {
         ->name('periode-pendaftaran.toggle-status');
     Route::delete('/periode-pendaftaran/{periode}', [PeriodePendaftaranController::class, 'destroy'])->name('periode-pendaftaran.destroy');
 
-   // Pendaftaran Anggota routes
-Route::get('/pendaftaran-anggota', [PendaftaranAnggotaController::class, 'index'])->name('pendaftaran-anggota.index');
-Route::get('/pendaftaran-anggota/create', [PendaftaranAnggotaController::class, 'create'])->name('pendaftaran-anggota.create');
-Route::post('/pendaftaran-anggota', [PendaftaranAnggotaController::class, 'store'])->name('pendaftaran-anggota.store');
-Route::get('/pendaftaran-anggota/{pendaftaranAnggota}', [PendaftaranAnggotaController::class, 'show'])->name('pendaftaran-anggota.show');
-Route::get('/pendaftaran-anggota/{pendaftaranAnggota}/edit', [PendaftaranAnggotaController::class, 'edit'])->name('pendaftaran-anggota.edit');
-Route::put('/pendaftaran-anggota/{pendaftaranAnggota}', [PendaftaranAnggotaController::class, 'update'])->name('pendaftaran-anggota.update');
-Route::patch('/pendaftaran-anggota/{pendaftaranAnggota}/terima', [PendaftaranAnggotaController::class, 'terima'])
-    ->name('pendaftaran-anggota.terima');
-Route::patch('/pendaftaran-anggota/{pendaftaranAnggota}/tolak', [PendaftaranAnggotaController::class, 'tolak'])
-    ->name('pendaftaran-anggota.tolak');
-Route::delete('/pendaftaran-anggota/{pendaftaranAnggota}', [PendaftaranAnggotaController::class, 'destroy'])->name('pendaftaran-anggota.destroy');
+    // Pendaftaran Anggota routes
+    Route::get('/pendaftaran-anggota', [PendaftaranAnggotaController::class, 'index'])->name('pendaftaran-anggota.index');
+    Route::get('/pendaftaran-anggota/create', [PendaftaranAnggotaController::class, 'create'])->name('pendaftaran-anggota.create');
+    Route::post('/pendaftaran-anggota', [PendaftaranAnggotaController::class, 'store'])->name('pendaftaran-anggota.store');
+    Route::get('/pendaftaran-anggota/{pendaftaranAnggota}', [PendaftaranAnggotaController::class, 'show'])->name('pendaftaran-anggota.show');
+    Route::get('/pendaftaran-anggota/{pendaftaranAnggota}/edit', [PendaftaranAnggotaController::class, 'edit'])->name('pendaftaran-anggota.edit');
+    Route::put('/pendaftaran-anggota/{pendaftaranAnggota}', [PendaftaranAnggotaController::class, 'update'])->name('pendaftaran-anggota.update');
+    Route::patch('/pendaftaran-anggota/{pendaftaranAnggota}/terima', [PendaftaranAnggotaController::class, 'terima'])
+        ->name('pendaftaran-anggota.terima');
+    Route::patch('/pendaftaran-anggota/{pendaftaranAnggota}/tolak', [PendaftaranAnggotaController::class, 'tolak'])
+        ->name('pendaftaran-anggota.tolak');
+    Route::delete('/pendaftaran-anggota/{pendaftaranAnggota}', [PendaftaranAnggotaController::class, 'destroy'])->name('pendaftaran-anggota.destroy');
 
-    // Pendaftaran Kerjasama routes
-    Route::get('/pendaftaran-kerjasama', [PendaftaranKerjasamaController::class, 'index'])->name('pendaftaran-kerjasama.index');
-    Route::get('/pendaftaran-kerjasama/create', [PendaftaranKerjasamaController::class, 'create'])->name('pendaftaran-kerjasama.create');
-    Route::post('/pendaftaran-kerjasama', [PendaftaranKerjasamaController::class, 'store'])->name('pendaftaran-kerjasama.store');
-    Route::get('/pendaftaran-kerjasama/{pendaftaran}', [PendaftaranKerjasamaController::class, 'show'])->name('pendaftaran-kerjasama.show');
-    Route::get('/pendaftaran-kerjasama/{pendaftaran}/edit', [PendaftaranKerjasamaController::class, 'edit'])->name('pendaftaran-kerjasama.edit');
-    Route::put('/pendaftaran-kerjasama/{pendaftaran}', [PendaftaranKerjasamaController::class, 'update'])->name('pendaftaran-kerjasama.update');
-    Route::delete('/pendaftaran-kerjasama/{pendaftaran}', [PendaftaranKerjasamaController::class, 'destroy'])->name('pendaftaran-kerjasama.destroy');
+    /// Pendaftaran Kerjasama routes
+    Route::get(
+        '/pendaftaran-kerjasama',
+        [PendaftaranKerjasamaController::class, 'index']
+    )->name('pendaftaran-kerjasama.index');
+
+    Route::get(
+        '/pendaftaran-kerjasama/create',
+        [PendaftaranKerjasamaController::class, 'create']
+    )->name('pendaftaran-kerjasama.create');
+
+    Route::post(
+        '/pendaftaran-kerjasama',
+        [PendaftaranKerjasamaController::class, 'store']
+    )->name('pendaftaran-kerjasama.store');
+
+    Route::get(
+        '/pendaftaran-kerjasama/{pendaftaran}/edit',
+        [PendaftaranKerjasamaController::class, 'edit']
+    )->name('pendaftaran-kerjasama.edit');
+
+    Route::put(
+        '/pendaftaran-kerjasama/{pendaftaran}',
+        [PendaftaranKerjasamaController::class, 'update']
+    )->name('pendaftaran-kerjasama.update');
+
+    Route::patch(
+        '/pendaftaran-kerjasama/{pendaftaran}/proses',
+        [PendaftaranKerjasamaController::class, 'proses']
+    )->name('pendaftaran-kerjasama.proses');
+
+    Route::patch(
+        '/pendaftaran-kerjasama/{pendaftaran}/terima',
+        [PendaftaranKerjasamaController::class, 'terima']
+    )->name('pendaftaran-kerjasama.terima');
+
+    Route::patch(
+        '/pendaftaran-kerjasama/{pendaftaran}/tolak',
+        [PendaftaranKerjasamaController::class, 'tolak']
+    )->name('pendaftaran-kerjasama.tolak');
+
+    Route::get(
+        '/pendaftaran-kerjasama/{pendaftaran}',
+        [PendaftaranKerjasamaController::class, 'show']
+    )->name('pendaftaran-kerjasama.show');
+
+    Route::delete(
+        '/pendaftaran-kerjasama/{pendaftaran}',
+        [PendaftaranKerjasamaController::class, 'destroy']
+    )->name('pendaftaran-kerjasama.destroy');
 
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('users.index');

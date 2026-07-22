@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Anggota;
 use App\Models\PendaftaranAnggota;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -62,8 +65,21 @@ class PendaftaranAnggotaController extends Controller
             'jenjang' => ['required', Rule::in(['mahasiswa', 'sma', 'smk'])],
             'jurusan_prodi' => ['nullable', 'string', 'max:255'],
             'angkatan' => ['nullable', 'string', 'max:10'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:pendaftaran_anggotas,email'],
-            'no_telepon' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s]+$/'],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                'unique:pendaftaran_anggotas,email',
+                'unique:anggotas,email', // tambahan: tidak boleh sama dengan anggota yang sudah ada
+            ],
+            'no_telepon' => [
+                'required',
+                'string',
+                'max:20',
+                'regex:/^[0-9+\-\s]+$/',
+                'unique:anggotas,no_telepon', // tambahan
+            ],
             'alamat' => ['nullable', 'string', 'max:1000'],
             'alasan_bergabung' => ['nullable', 'string', 'max:2000'],
             'file_cv' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:1024'],
@@ -72,6 +88,7 @@ class PendaftaranAnggotaController extends Controller
             'catatan_admin' => ['nullable', 'string', 'max:2000'],
         ], [
             'email.unique' => 'Email ini sudah terdaftar.',
+            'no_telepon.unique' => 'No. telepon ini sudah digunakan oleh anggota lain.',
             'file_cv.mimes' => 'File CV harus berformat PDF, DOC, atau DOCX.',
             'file_cv.max' => 'Ukuran file CV maksimal 1MB.',
             'foto.image' => 'File foto harus berupa gambar.',
@@ -203,18 +220,62 @@ class PendaftaranAnggotaController extends Controller
             ]);
     }
 
-    public function terima(Request $request, PendaftaranAnggota $pendaftaranAnggota): RedirectResponse
+    public function terima(Request $request, PendaftaranAnggota $pendaftaranAnggota)
     {
-        $data = $request->validate([
-            'catatan_admin' => ['nullable', 'string', 'max:2000'],
+        $validated = $request->validate([
+            'jabatan' => 'nullable|string|max:255',
+            'divisi' => 'nullable|string|max:255',
+            'tanggal_bergabung' => 'required|date',
         ]);
 
-        $pendaftaranAnggota->update([
-            'status' => 'diterima',
-            'catatan_admin' => $data['catatan_admin'] ?? null,
-            'diproses_oleh' => $request->user()->id,
-            'tanggal_diproses' => now(),
-        ]);
+        if ($pendaftaranAnggota->status !== 'pending') {
+            return back()->with('error', 'Pendaftaran ini sudah diproses sebelumnya.');
+        }
+
+        // Cek duplikasi terhadap anggota yang sudah ada
+        $errors = [];
+
+        if (Anggota::where('email', $pendaftaranAnggota->email)->exists()) {
+            $errors['email'] = "Email \"{$pendaftaranAnggota->email}\" sudah terdaftar sebagai anggota lain.";
+        }
+
+        if (Anggota::where('no_telepon', $pendaftaranAnggota->no_telepon)->exists()) {
+            $errors['no_telepon'] = "No. telepon \"{$pendaftaranAnggota->no_telepon}\" sudah terdaftar sebagai anggota lain.";
+        }
+
+        if (!empty($errors)) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        try {
+            DB::transaction(function () use ($pendaftaranAnggota, $validated, $request) {
+                Anggota::create([
+                    'nama' => $pendaftaranAnggota->nama,
+                    'foto' => $pendaftaranAnggota->foto,
+                    'email' => $pendaftaranAnggota->email,
+                    'no_telepon' => $pendaftaranAnggota->no_telepon,
+                    'jabatan' => $validated['jabatan'],
+                    'divisi' => $validated['divisi'],
+                    'alamat' => $pendaftaranAnggota->alamat,
+                    'tanggal_bergabung' => $validated['tanggal_bergabung'],
+                    'status' => 'aktif',
+                ]);
+
+                $pendaftaranAnggota->update([
+                    'status' => 'diterima',
+                    'diproses_oleh' => $request->user()->id,
+                    'tanggal_diproses' => now(),
+                ]);
+            });
+        } catch (QueryException $e) {
+            // Jaga-jaga kalau ada race condition (dua request bersamaan lolos pengecekan di atas)
+            if ($e->getCode() === '23000') {
+                throw ValidationException::withMessages([
+                    'email' => 'Email atau No. telepon sudah dipakai oleh anggota lain. Silakan cek kembali.',
+                ]);
+            }
+            throw $e;
+        }
 
         return back()->with('flash', [
             'toast' => [

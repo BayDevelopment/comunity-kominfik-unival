@@ -8,10 +8,12 @@ import {
     Trash2,
     Check,
     X,
+    Clock,
     ChevronLeft,
     ChevronRight,
     FolderX,
     SlidersHorizontal,
+    Building2,
 } from 'lucide-vue-next';
 import Swal from 'sweetalert2';
 import { ref, watch } from 'vue';
@@ -25,31 +27,30 @@ defineOptions({
                 href: dashboard(),
             },
             {
-                title: 'Pendaftaran Anggota',
-                href: '/pendaftaran-anggota',
+                title: 'Kerjasama',
+                href: '/pendaftaran-kerjasama',
             },
         ],
     },
 });
 
-interface PendaftaranAnggota {
+interface Kerjasama {
     id: number;
-    nama: string;
-    nim_nis: string;
-    asal_instansi: string;
-    jenjang: 'mahasiswa' | 'sma' | 'smk';
-    jurusan_prodi: string | null;
-    angkatan: string | null;
-    email: string;
-    no_telepon: string;
+    jenis_instansi: 'kampus' | 'sma' | 'smk' | 'perusahaan' | 'lainnya';
+    nama_instansi: string;
     alamat: string | null;
-    alasan_bergabung: string | null;
-    file_cv: string | null;
-    foto: string | null;
-    status: 'pending' | 'diterima' | 'ditolak';
+    nama_pic: string;
+    jabatan_pic: string | null;
+    email_pic: string;
+    no_hp_pic: string;
+    jenis_kerjasama: string | null;
+    deskripsi_kerjasama: string | null;
+    file_proposal: string | null;
+    file_mou: string | null;
+    status: 'pending' | 'diproses' | 'disetujui' | 'ditolak';
     catatan_admin: string | null;
+    tanggal_pengajuan: string;
     tanggal_diproses: string | null;
-    created_at: string;
 }
 
 interface Paginated<T> {
@@ -62,25 +63,29 @@ interface Paginated<T> {
 }
 
 const props = defineProps<{
-    pendaftarans?: Paginated<PendaftaranAnggota>;
+    kerjasamas?: Paginated<Kerjasama>;
     filters?: {
         search?: string;
         status?: string;
-        jenjang?: string;
+        jenis_instansi?: string;
     };
 }>();
 
 const search = ref(props.filters?.search ?? '');
 const status = ref(props.filters?.status ?? '');
-const jenjang = ref(props.filters?.jenjang ?? '');
+const jenisInstansi = ref(props.filters?.jenis_instansi ?? '');
 
-const statusConfig: Record<PendaftaranAnggota['status'], { label: string; class: string }> = {
+const statusConfig: Record<Kerjasama['status'], { label: string; class: string }> = {
     pending: {
         label: 'Pending',
         class: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
     },
-    diterima: {
-        label: 'Diterima',
+    diproses: {
+        label: 'Diproses',
+        class: 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-500/20',
+    },
+    disetujui: {
+        label: 'Disetujui',
         class: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
     },
     ditolak: {
@@ -89,10 +94,12 @@ const statusConfig: Record<PendaftaranAnggota['status'], { label: string; class:
     },
 };
 
-const jenjangLabel: Record<PendaftaranAnggota['jenjang'], string> = {
-    mahasiswa: 'Mahasiswa',
+const jenisInstansiLabel: Record<Kerjasama['jenis_instansi'], string> = {
+    kampus: 'Kampus',
     sma: 'SMA',
     smk: 'SMK',
+    perusahaan: 'Perusahaan',
+    lainnya: 'Lainnya',
 };
 
 function formatTanggal(value: string | null): string {
@@ -121,11 +128,11 @@ function applyFilters() {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
         router.get(
-            '/pendaftaran-anggota',
+            '/pendaftaran-kerjasama',
             {
                 search: search.value || undefined,
                 status: status.value || undefined,
-                jenjang: jenjang.value || undefined,
+                jenis_instansi: jenisInstansi.value || undefined,
             },
             {
                 preserveState: true,
@@ -135,15 +142,15 @@ function applyFilters() {
     }, 350);
 }
 
-watch([search, status, jenjang], applyFilters);
+watch([search, status, jenisInstansi], applyFilters);
 
 function goToPage(page: number) {
     router.get(
-        '/pendaftaran-anggota',
+        '/pendaftaran-kerjasama',
         {
             search: search.value || undefined,
             status: status.value || undefined,
-            jenjang: jenjang.value || undefined,
+            jenis_instansi: jenisInstansi.value || undefined,
             page,
         },
         {
@@ -155,72 +162,66 @@ function goToPage(page: number) {
 
 const processingId = ref<number | null>(null);
 
-function terimaPendaftaran(item: PendaftaranAnggota) {
-    const today = new Date().toISOString().split('T')[0];
-
+function prosesKerjasama(item: Kerjasama) {
     Swal.fire({
-        title: 'Terima Pendaftar?',
-        html: `
-            <p class="mb-3 text-left text-sm text-gray-600">
-                Pendaftaran <b>"${item.nama}"</b> akan diterima dan otomatis dijadikan anggota.
-                Lengkapi data berikut sebelum melanjutkan:
-            </p>
-            <div class="text-left space-y-3">
-                <div>
-                    <label class="block text-xs font-medium mb-1">Jabatan</label>
-                    <input id="swal-jabatan" class="swal2-input" style="margin:0;width:100%" placeholder="Contoh: Staff, Anggota, dll">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium mb-1">Divisi</label>
-                    <input id="swal-divisi" class="swal2-input" style="margin:0;width:100%" placeholder="Contoh: Humas, IT, dll">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium mb-1">Tanggal Bergabung</label>
-                    <input id="swal-tanggal" type="date" class="swal2-input" style="margin:0;width:100%" value="${today}">
-                </div>
-            </div>
-        `,
+        title: 'Proses Pengajuan?',
+        html: `Pengajuan kerjasama dari <b>"${item.nama_instansi}"</b> akan ditandai sedang diproses.`,
         icon: 'question',
         showCancelButton: true,
-        confirmButtonText: 'Ya, Terima & Jadikan Anggota',
+        confirmButtonText: 'Ya, Proses',
         cancelButtonText: 'Batal',
-        confirmButtonColor: '#059669',
+        confirmButtonColor: '#2563eb',
         cancelButtonColor: '#6b7280',
         reverseButtons: true,
-        focusConfirm: false,
-        preConfirm: () => {
-            const jabatan = (document.getElementById('swal-jabatan') as HTMLInputElement)?.value.trim();
-            const divisi = (document.getElementById('swal-divisi') as HTMLInputElement)?.value.trim();
-            const tanggal_bergabung = (document.getElementById('swal-tanggal') as HTMLInputElement)?.value;
-
-            if (!tanggal_bergabung) {
-                Swal.showValidationMessage('Tanggal bergabung wajib diisi');
-
-                return false;
-            }
-
-            return { jabatan: jabatan || null, divisi: divisi || null, tanggal_bergabung };
-        },
     }).then((result) => {
-        if (result.isConfirmed && result.value) {
+        if (result.isConfirmed) {
             processingId.value = item.id;
-            router.patch(`/pendaftaran-anggota/${item.id}/terima`, result.value, {
-                preserveScroll: true,
-                onFinish: () => {
-                    processingId.value = null;
+            router.patch(
+                `/pendaftaran-kerjasama/${item.id}/proses`,
+                {},
+                {
+                    preserveScroll: true,
+                    onFinish: () => {
+                        processingId.value = null;
+                    },
                 },
-                onError: () => {
-                    Swal.fire('Gagal', 'Terjadi kesalahan saat memproses data.', 'error');
-                },
-            });
+            );
         }
     });
 }
 
-function tolakPendaftaran(item: PendaftaranAnggota) {
+function setujuiKerjasama(item: Kerjasama) {
     Swal.fire({
-        title: 'Tolak Pendaftar?',
-        html: `Pendaftaran <b>"${item.nama}"</b> akan ditolak.`,
+        title: 'Setujui Kerjasama?',
+        html: `Pengajuan kerjasama dari <b>"${item.nama_instansi}"</b> akan disetujui.`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Setujui',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#059669',
+        cancelButtonColor: '#6b7280',
+        reverseButtons: true,
+    }).then((result) => {
+        if (result.isConfirmed) {
+            processingId.value = item.id;
+            router.patch(
+                `/pendaftaran-kerjasama/${item.id}/terima`,
+                {},
+                {
+                    preserveScroll: true,
+                    onFinish: () => {
+                        processingId.value = null;
+                    },
+                },
+            );
+        }
+    });
+}
+
+function tolakKerjasama(item: Kerjasama) {
+    Swal.fire({
+        title: 'Tolak Kerjasama?',
+        html: `Pengajuan kerjasama dari <b>"${item.nama_instansi}"</b> akan ditolak.`,
         icon: 'warning',
         input: 'textarea',
         inputLabel: 'Catatan (opsional)',
@@ -235,7 +236,7 @@ function tolakPendaftaran(item: PendaftaranAnggota) {
         if (result.isConfirmed) {
             processingId.value = item.id;
             router.patch(
-                `/pendaftaran-anggota/${item.id}/tolak`,
+                `/pendaftaran-kerjasama/${item.id}/tolak`,
                 { catatan_admin: result.value || null },
                 {
                     preserveScroll: true,
@@ -250,10 +251,10 @@ function tolakPendaftaran(item: PendaftaranAnggota) {
 
 const deletingId = ref<number | null>(null);
 
-function hapusPendaftaran(item: PendaftaranAnggota) {
+function hapusKerjasama(item: Kerjasama) {
     Swal.fire({
-        title: 'Hapus Pendaftaran?',
-        html: `Data pendaftaran <b>"${item.nama}"</b> akan dihapus secara permanen.<br>Tindakan ini tidak dapat dibatalkan.`,
+        title: 'Hapus Pengajuan?',
+        html: `Data kerjasama dari <b>"${item.nama_instansi}"</b> akan dihapus secara permanen.<br>Tindakan ini tidak dapat dibatalkan.`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonText: 'Ya, Hapus',
@@ -265,7 +266,7 @@ function hapusPendaftaran(item: PendaftaranAnggota) {
     }).then((result) => {
         if (result.isConfirmed) {
             deletingId.value = item.id;
-            router.delete(`/pendaftaran-anggota/${item.id}`, {
+            router.delete(`/pendaftaran-kerjasama/${item.id}`, {
                 preserveScroll: true,
                 onFinish: () => {
                     deletingId.value = null;
@@ -278,22 +279,22 @@ function hapusPendaftaran(item: PendaftaranAnggota) {
 
 <template>
 
-    <Head title="Pendaftaran Anggota" />
+    <Head title="Kerjasama" />
 
     <div class="space-y-6 p-6">
         <!-- Header -->
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 class="text-2xl font-bold">Pendaftaran Anggota</h1>
+                <h1 class="text-2xl font-bold">Pengajuan Kerjasama</h1>
                 <p class="text-sm text-muted-foreground">
-                    Kelola data pendaftar yang ingin bergabung menjadi anggota.
+                    Kelola pengajuan kerjasama dari instansi mitra.
                 </p>
             </div>
 
-            <Link href="/pendaftaran-anggota/create"
+            <Link href="/pendaftaran-kerjasama/create"
                 class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
                 <Plus class="h-4 w-4" />
-                Tambah Pendaftar
+                Tambah Kerjasama
             </Link>
         </div>
 
@@ -302,19 +303,21 @@ function hapusPendaftaran(item: PendaftaranAnggota) {
             <div class="relative flex-1">
                 <Search
                     class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input v-model="search" type="text" placeholder="Cari nama, NIM/NIS, atau email..."
+                <input v-model="search" type="text" placeholder="Cari nama instansi, PIC, atau email..."
                     class="w-full rounded-lg border bg-background py-2.5 pr-3 pl-9 text-sm ring-offset-background transition-shadow outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring" />
             </div>
 
             <div class="relative sm:w-48">
                 <SlidersHorizontal
                     class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <select v-model="jenjang"
+                <select v-model="jenisInstansi"
                     class="w-full appearance-none rounded-lg border bg-background py-2.5 pr-3 pl-9 text-sm transition-shadow outline-none focus:ring-2 focus:ring-ring">
-                    <option value="">Semua Jenjang</option>
-                    <option value="mahasiswa">Mahasiswa</option>
+                    <option value="">Semua Jenis Instansi</option>
+                    <option value="kampus">Kampus</option>
                     <option value="sma">SMA</option>
                     <option value="smk">SMK</option>
+                    <option value="perusahaan">Perusahaan</option>
+                    <option value="lainnya">Lainnya</option>
                 </select>
             </div>
 
@@ -325,7 +328,8 @@ function hapusPendaftaran(item: PendaftaranAnggota) {
                     class="w-full appearance-none rounded-lg border bg-background py-2.5 pr-3 pl-9 text-sm transition-shadow outline-none focus:ring-2 focus:ring-ring">
                     <option value="">Semua Status</option>
                     <option value="pending">Pending</option>
-                    <option value="diterima">Diterima</option>
+                    <option value="diproses">Diproses</option>
+                    <option value="disetujui">Disetujui</option>
                     <option value="ditolak">Ditolak</option>
                 </select>
             </div>
@@ -333,21 +337,21 @@ function hapusPendaftaran(item: PendaftaranAnggota) {
 
         <!-- Table Card -->
         <div class="overflow-hidden rounded-xl border bg-background shadow-sm">
-            <div v-if="!pendaftarans || pendaftarans.data.length === 0"
+            <div v-if="!kerjasamas || kerjasamas.data.length === 0"
                 class="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
                 <div class="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
                     <FolderX class="h-6 w-6 text-muted-foreground" />
                 </div>
                 <div>
-                    <p class="font-medium">Belum ada pendaftar</p>
+                    <p class="font-medium">Belum ada pengajuan kerjasama</p>
                     <p class="text-sm text-muted-foreground">
-                        Data pendaftar anggota akan muncul di sini.
+                        Pengajuan kerjasama dari instansi akan muncul di sini.
                     </p>
                 </div>
-                <Link href="/pendaftaran-anggota/create"
+                <Link href="/pendaftaran-kerjasama/create"
                     class="mt-2 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted">
                     <Plus class="h-4 w-4" />
-                    Tambah Pendaftar Pertama
+                    Tambah Kerjasama Pertama
                 </Link>
             </div>
 
@@ -356,48 +360,49 @@ function hapusPendaftaran(item: PendaftaranAnggota) {
                     <thead>
                         <tr
                             class="border-b bg-muted/40 text-left text-xs tracking-wide text-muted-foreground uppercase">
-                            <th class="px-6 py-3 font-medium">Pendaftar</th>
-                            <th class="px-6 py-3 font-medium">Instansi / Jenjang</th>
-                            <th class="px-6 py-3 font-medium">Kontak</th>
+                            <th class="px-6 py-3 font-medium">Instansi</th>
+                            <th class="px-6 py-3 font-medium">PIC</th>
+                            <th class="px-6 py-3 font-medium">Jenis Kerjasama</th>
                             <th class="px-6 py-3 font-medium">Status</th>
-                            <th class="px-6 py-3 font-medium">Tanggal Daftar</th>
+                            <th class="px-6 py-3 font-medium">Tanggal Pengajuan</th>
                             <th class="px-6 py-3 text-right font-medium">
                                 Aksi
                             </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y">
-                        <tr v-for="item in pendaftarans.data" :key="item.id"
+                        <tr v-for="item in kerjasamas.data" :key="item.id"
                             class="transition-colors hover:bg-muted/30">
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div v-if="item.foto"
-                                        class="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-muted">
-                                        <img :src="`/storage/${item.foto}`" :alt="item.nama"
-                                            class="h-full w-full object-cover" />
-                                    </div>
-                                    <div v-else
-                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-600 dark:bg-blue-500/10 dark:text-blue-400">
-                                        {{ initials(item.nama) }}
+                                    <div
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/10">
+                                        <Building2 class="h-4 w-4 text-blue-500" />
                                     </div>
                                     <div>
-                                        <p class="font-medium">{{ item.nama }}</p>
+                                        <p class="font-medium">{{ item.nama_instansi }}</p>
                                         <p class="text-xs text-muted-foreground">
-                                            {{ item.nim_nis }}
+                                            {{ jenisInstansiLabel[item.jenis_instansi] }}
                                         </p>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <p class="text-foreground">{{ item.asal_instansi }}</p>
-                                <p class="text-xs text-muted-foreground">
-                                    {{ jenjangLabel[item.jenjang] }}
-                                    <span v-if="item.jurusan_prodi"> · {{ item.jurusan_prodi }}</span>
-                                </p>
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                                        {{ initials(item.nama_pic) }}
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">{{ item.nama_pic }}</p>
+                                        <p class="text-xs text-muted-foreground">
+                                            {{ item.jabatan_pic ?? item.email_pic }}
+                                        </p>
+                                    </div>
+                                </div>
                             </td>
                             <td class="px-6 py-4 text-muted-foreground">
-                                <p>{{ item.email }}</p>
-                                <p class="text-xs">{{ item.no_telepon }}</p>
+                                {{ item.jenis_kerjasama ?? '—' }}
                             </td>
                             <td class="px-6 py-4">
                                 <span
@@ -407,31 +412,36 @@ function hapusPendaftaran(item: PendaftaranAnggota) {
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-muted-foreground">
-                                {{ formatTanggal(item.created_at) }}
+                                {{ formatTanggal(item.tanggal_pengajuan) }}
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center justify-end gap-1">
                                     <button v-if="item.status === 'pending'" type="button"
                                         :disabled="processingId === item.id"
+                                        class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-blue-50 hover:text-blue-600 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-blue-500/10"
+                                        title="Proses pengajuan" @click="prosesKerjasama(item)">
+                                        <Clock class="h-4 w-4" />
+                                    </button>
+                                    <button v-if="item.status === 'pending' || item.status === 'diproses'"
+                                        type="button" :disabled="processingId === item.id"
                                         class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-emerald-50 hover:text-emerald-600 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-emerald-500/10"
-                                        title="Terima pendaftar" @click="terimaPendaftaran(item)">
+                                        title="Setujui kerjasama" @click="setujuiKerjasama(item)">
                                         <Check class="h-4 w-4" />
                                     </button>
-
-                                    <button v-if="item.status === 'pending'" type="button"
-                                        :disabled="processingId === item.id"
+                                    <button v-if="item.status === 'pending' || item.status === 'diproses'"
+                                        type="button" :disabled="processingId === item.id"
                                         class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-rose-500/10"
-                                        title="Tolak pendaftar" @click="tolakPendaftaran(item)">
+                                        title="Tolak kerjasama" @click="tolakKerjasama(item)">
                                         <X class="h-4 w-4" />
                                     </button>
 
-                                    <Link :href="`/pendaftaran-anggota/${item.id}/edit`"
+                                    <Link :href="`/pendaftaran-kerjasama/${item.id}/edit`"
                                         class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                        title="Edit data pendaftar">
+                                        title="Edit data kerjasama">
                                         <Pencil class="h-4 w-4" />
                                     </Link>
 
-                                    <Link :href="`/pendaftaran-anggota/${item.id}`"
+                                    <Link :href="`/pendaftaran-kerjasama/${item.id}`"
                                         class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                         title="Lihat detail">
                                         <Eye class="h-4 w-4" />
@@ -439,7 +449,7 @@ function hapusPendaftaran(item: PendaftaranAnggota) {
 
                                     <button type="button" :disabled="deletingId === item.id"
                                         class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-rose-500/10"
-                                        title="Hapus pendaftaran" @click="hapusPendaftaran(item)">
+                                        title="Hapus pengajuan" @click="hapusKerjasama(item)">
                                         <Trash2 class="h-4 w-4" />
                                     </button>
                                 </div>
@@ -450,28 +460,28 @@ function hapusPendaftaran(item: PendaftaranAnggota) {
             </div>
 
             <!-- Pagination -->
-            <div v-if="pendaftarans && pendaftarans.data.length > 0"
+            <div v-if="kerjasamas && kerjasamas.data.length > 0"
                 class="flex flex-col gap-3 border-t px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <p class="text-sm text-muted-foreground">
-                    Menampilkan {{ pendaftarans.from }}–{{ pendaftarans.to }} dari
-                    {{ pendaftarans.total }} pendaftar
+                    Menampilkan {{ kerjasamas.from }}–{{ kerjasamas.to }} dari
+                    {{ kerjasamas.total }} pengajuan
                 </p>
 
                 <div class="flex items-center gap-2">
-                    <button type="button" :disabled="pendaftarans.current_page <= 1"
+                    <button type="button" :disabled="kerjasamas.current_page <= 1"
                         class="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
-                        @click="goToPage(pendaftarans.current_page - 1)">
+                        @click="goToPage(kerjasamas.current_page - 1)">
                         <ChevronLeft class="h-4 w-4" />
                         Sebelumnya
                     </button>
 
                     <span class="px-2 text-sm text-muted-foreground">
-                        {{ pendaftarans.current_page }} / {{ pendaftarans.last_page }}
+                        {{ kerjasamas.current_page }} / {{ kerjasamas.last_page }}
                     </span>
 
-                    <button type="button" :disabled="pendaftarans.current_page >= pendaftarans.last_page"
+                    <button type="button" :disabled="kerjasamas.current_page >= kerjasamas.last_page"
                         class="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
-                        @click="goToPage(pendaftarans.current_page + 1)">
+                        @click="goToPage(kerjasamas.current_page + 1)">
                         Selanjutnya
                         <ChevronRight class="h-4 w-4" />
                     </button>

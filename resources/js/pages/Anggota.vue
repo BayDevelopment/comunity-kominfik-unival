@@ -113,6 +113,16 @@ function submit() {
     form.post('/join/anggota', {
         forceFormData: true,
         preserveScroll: true,
+
+        onSuccess: () => {
+            // Kosongkan semua data form setelah berhasil disimpan
+            form.reset();
+            form.clearErrors();
+
+            // Kosongkan nama file yang tampil
+            cvFileName.value = '';
+            fotoFileName.value = '';
+        },
     });
 }
 </script>
@@ -212,8 +222,8 @@ function submit() {
                         <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
                             <!-- Nama -->
                             <div class="md:col-span-2">
-                                <label class="mb-2 block text-sm font-bold text-slate-800">Nama Lengkap</label>
-                                <input v-model="form.nama" type="text" placeholder="Nama sesuai identitas"
+                                <label class="mb-2 block text-sm font-bold text-slate-800">Nama Lengkap <span class="text-rose-600" aria-hidden="true">*</span></label>
+                                <input v-model="form.nama" type="text" placeholder="Nama sesuai identitas" required
                                     class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
                                 <p v-if="form.errors.nama" class="mt-1.5 text-xs font-semibold text-rose-600">{{
                                     form.errors.nama }}</p>
@@ -221,8 +231,8 @@ function submit() {
 
                             <!-- NIM/NIS -->
                             <div>
-                                <label class="mb-2 block text-sm font-bold text-slate-800">NIM / NIS</label>
-                                <input v-model="form.nim_nis" type="text" placeholder="Nomor induk"
+                                <label class="mb-2 block text-sm font-bold text-slate-800">NIM / NIS <span class="text-rose-600" aria-hidden="true">*</span></label>
+                                <input v-model="form.nim_nis" type="text" placeholder="Nomor induk" required
                                     class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
                                 <p v-if="form.errors.nim_nis" class="mt-1.5 text-xs font-semibold text-rose-600">{{
                                     form.errors.nim_nis }}</p>
@@ -230,8 +240,8 @@ function submit() {
 
                             <!-- Jenjang -->
                             <div>
-                                <label class="mb-2 block text-sm font-bold text-slate-800">Jenjang</label>
-                                <select v-model="form.jenjang"
+                                <label class="mb-2 block text-sm font-bold text-slate-800">Jenjang <span class="text-rose-600" aria-hidden="true">*</span></label>
+                                <select v-model="form.jenjang" required
                                     class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100">
                                     <option value="" disabled>Pilih jenjang</option>
                                     <option value="mahasiswa">Mahasiswa</option>
@@ -244,8 +254,8 @@ function submit() {
 
                             <!-- Asal Instansi -->
                             <div>
-                                <label class="mb-2 block text-sm font-bold text-slate-800">Asal Instansi</label>
-                                <input v-model="form.asal_instansi" type="text" placeholder="Nama kampus/sekolah"
+                                <label class="mb-2 block text-sm font-bold text-slate-800">Asal Instansi <span class="text-rose-600" aria-hidden="true">*</span></label>
+                                <input v-model="form.asal_instansi" type="text" placeholder="Nama kampus/sekolah" required
                                     class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
                                 <p v-if="form.errors.asal_instansi" class="mt-1.5 text-xs font-semibold text-rose-600">
                                     {{ form.errors.asal_instansi }}</p>
@@ -271,8 +281,8 @@ function submit() {
 
                             <!-- Email -->
                             <div>
-                                <label class="mb-2 block text-sm font-bold text-slate-800">Email</label>
-                                <input v-model="form.email" type="email" placeholder="nama@email.com"
+                                <label class="mb-2 block text-sm font-bold text-slate-800">Email <span class="text-rose-600" aria-hidden="true">*</span></label>
+                                <input v-model="form.email" type="email" placeholder="nama@email.com" required
                                     class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
                                 <p v-if="form.errors.email" class="mt-1.5 text-xs font-semibold text-rose-600">{{
                                     form.errors.email }}</p>
@@ -280,8 +290,8 @@ function submit() {
 
                             <!-- No Telepon -->
                             <div>
-                                <label class="mb-2 block text-sm font-bold text-slate-800">No. Telepon</label>
-                                <input v-model="form.no_telepon" type="text" placeholder="08xxxxxxxxxx"
+                                <label class="mb-2 block text-sm font-bold text-slate-800">No. Telepon <span class="text-rose-600" aria-hidden="true">*</span></label>
+                                <input v-model="form.no_telepon" type="text" placeholder="08xxxxxxxxxx" required
                                     class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
                                 <p v-if="form.errors.no_telepon" class="mt-1.5 text-xs font-semibold text-rose-600">{{
                                     form.errors.no_telepon }}</p>
@@ -334,7 +344,7 @@ function submit() {
                                     <input type="file" class="hidden" accept="image/jpeg,image/png,image/webp"
                                         @change="onFotoChange" />
                                 </label>
-                                <p class="mt-1.5 text-xs text-slate-400">Format: JPG, PNG, WEBP • Maks. 1 MB</p>
+                                <p class="mt-1.5 text-xs text-slate-400">Format: JPG, PNG • Maks. 1 MB</p>
                                 <p v-if="fotoFileName" class="mt-1.5 flex items-center gap-1 text-xs text-slate-500">
                                     <ImageIcon class="h-3.5 w-3.5" /> {{ fotoFileName }}
                                 </p>

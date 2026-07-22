@@ -108,9 +108,19 @@ function submit() {
         return;
     }
 
-    form.post('/join/kerjasama/university', {
+    form.post('/join/kerjasama', {
         forceFormData: true,
         preserveScroll: true,
+
+        onSuccess: () => {
+            // Kosongkan semua data form setelah berhasil disimpan
+            form.reset();
+            form.clearErrors();
+
+            // Kosongkan nama file yang tampil
+            proposalFileName.value = '';
+            mouFileName.value = '';
+        },
     });
 }
 </script>
@@ -211,8 +221,10 @@ function submit() {
                         <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
                             <!-- Jenis Instansi -->
                             <div>
-                                <label class="mb-2 block text-sm font-bold text-slate-800">Jenis Instansi</label>
-                                <select v-model="form.jenis_instansi"
+                                <label class="mb-2 block text-sm font-bold text-slate-800">
+                                    Jenis Instansi <span class="text-rose-600">*</span>
+                                </label>
+                                <select v-model="form.jenis_instansi" required
                                     class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100">
                                     <option value="" disabled>Pilih jenis instansi</option>
                                     <option value="kampus">Kampus</option>
@@ -227,8 +239,11 @@ function submit() {
 
                             <!-- Nama Instansi -->
                             <div>
-                                <label class="mb-2 block text-sm font-bold text-slate-800">Nama Instansi</label>
-                                <input v-model="form.nama_instansi" type="text" placeholder="Nama institusi/perusahaan"
+                                <label class="mb-2 block text-sm font-bold text-slate-800">
+                                    Nama Instansi <span class="text-rose-600">*</span>
+                                </label>
+                                <input v-model="form.nama_instansi" type="text" required
+                                    placeholder="Nama institusi/perusahaan"
                                     class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
                                 <p v-if="form.errors.nama_instansi" class="mt-1.5 text-xs font-semibold text-rose-600">
                                     {{ form.errors.nama_instansi }}</p>
@@ -245,8 +260,10 @@ function submit() {
 
                             <!-- Nama PIC -->
                             <div>
-                                <label class="mb-2 block text-sm font-bold text-slate-800">Nama PIC</label>
-                                <input v-model="form.nama_pic" type="text" placeholder="Nama penanggung jawab"
+                                <label class="mb-2 block text-sm font-bold text-slate-800">
+                                    Nama PIC <span class="text-rose-600">*</span>
+                                </label>
+                                <input v-model="form.nama_pic" type="text" required placeholder="Nama penanggung jawab"
                                     class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
                                 <p v-if="form.errors.nama_pic" class="mt-1.5 text-xs font-semibold text-rose-600">{{
                                     form.errors.nama_pic }}</p>
@@ -263,8 +280,10 @@ function submit() {
 
                             <!-- Email PIC -->
                             <div>
-                                <label class="mb-2 block text-sm font-bold text-slate-800">Email PIC</label>
-                                <input v-model="form.email_pic" type="email" placeholder="nama@instansi.com"
+                                <label class="mb-2 block text-sm font-bold text-slate-800">
+                                    Email PIC <span class="text-rose-600">*</span>
+                                </label>
+                                <input v-model="form.email_pic" type="email" required placeholder="nama@instansi.com"
                                     class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
                                 <p v-if="form.errors.email_pic" class="mt-1.5 text-xs font-semibold text-rose-600">{{
                                     form.errors.email_pic }}</p>
@@ -272,8 +291,10 @@ function submit() {
 
                             <!-- No HP PIC -->
                             <div>
-                                <label class="mb-2 block text-sm font-bold text-slate-800">No. HP PIC</label>
-                                <input v-model="form.no_hp_pic" type="text" placeholder="08xxxxxxxxxx"
+                                <label class="mb-2 block text-sm font-bold text-slate-800">
+                                    No. HP PIC <span class="text-rose-600">*</span>
+                                </label>
+                                <input v-model="form.no_hp_pic" type="text" required placeholder="08xxxxxxxxxx"
                                     class="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100" />
                                 <p v-if="form.errors.no_hp_pic" class="mt-1.5 text-xs font-semibold text-rose-600">{{
                                     form.errors.no_hp_pic }}</p>

@@ -95,7 +95,6 @@ class PendaftaranKerjasamaController extends Controller
     /**
      * Menyimpan pendaftaran kerjasama baru.
      */
-
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateKerjasama($request);
@@ -411,6 +410,8 @@ class PendaftaranKerjasamaController extends Controller
 
     /**
      * Validasi formulir tambah dan edit.
+     *
+     * @return array<string, mixed>
      */
     private function validateKerjasama(
         Request $request,
@@ -487,6 +488,9 @@ class PendaftaranKerjasamaController extends Controller
 
     /**
      * Membersihkan data teks.
+     *
+     * @param array<string, mixed> $validated
+     * @return array<string, mixed>
      */
     private function cleanKerjasamaData(
         array $validated,
@@ -556,6 +560,8 @@ class PendaftaranKerjasamaController extends Controller
 
     /**
      * Mengubah status melalui route khusus secara atomik.
+     *
+     * @param array<int, string> $allowedStatuses
      */
     private function changeStatus(
         Request $request,

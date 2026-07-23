@@ -9,16 +9,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
-use Illuminate\Support\Str;
+use Inertia\Response;
 
 class LayananController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $layanans = Layanan::query()
             ->when(
@@ -66,7 +67,7 @@ class LayananController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): Response
     {
         return Inertia::render('layanan/create');
     }
@@ -164,11 +165,16 @@ class LayananController extends Controller
                 }
 
                 $finfo = finfo_open(FILEINFO_MIME_TYPE);
+
+                if ($finfo === false) {
+                    throw new \Exception('Gagal membuka pemeriksa tipe file (fileinfo).');
+                }
+
                 $mimeType = finfo_file($finfo, $file->getPathname());
                 finfo_close($finfo);
 
                 $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-                if (!in_array($mimeType, $allowedMimes)) {
+                if (!in_array($mimeType, $allowedMimes, true)) {
                     throw new \Exception('Tipe file tidak diizinkan. Hanya JPG, PNG, dan WEBP.');
                 }
 
@@ -254,7 +260,7 @@ class LayananController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Layanan $layanan)
+    public function show(Layanan $layanan): Response
     {
         return Inertia::render('layanan/view', [
             'layanan' => array_merge($layanan->toArray(), [
@@ -267,7 +273,7 @@ class LayananController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Layanan $layanan)
+    public function edit(Layanan $layanan): Response
     {
         return Inertia::render('layanan/edit', [
             'layanan' => $layanan,
@@ -378,11 +384,16 @@ class LayananController extends Controller
                 }
 
                 $finfo = finfo_open(FILEINFO_MIME_TYPE);
+
+                if ($finfo === false) {
+                    throw new \Exception('Gagal membuka pemeriksa tipe file (fileinfo).');
+                }
+
                 $mimeType = finfo_file($finfo, $file->getPathname());
                 finfo_close($finfo);
 
                 $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-                if (!in_array($mimeType, $allowedMimes)) {
+                if (!in_array($mimeType, $allowedMimes, true)) {
                     throw new \Exception('Tipe file tidak diizinkan. Hanya JPG, PNG, dan WEBP.');
                 }
 

@@ -8,6 +8,7 @@ use App\Models\PendaftaranAnggota;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
@@ -230,7 +231,7 @@ class PendaftaranAnggotaController extends Controller
             ]);
     }
 
-    public function terima(Request $request, PendaftaranAnggota $pendaftaranAnggota)
+    public function terima(Request $request, PendaftaranAnggota $pendaftaranAnggota): RedirectResponse
     {
         $validated = $request->validate([
             'jabatan' => 'nullable|string|max:255',
@@ -316,7 +317,7 @@ class PendaftaranAnggotaController extends Controller
         ]);
     }
 
-    private function storeUploadedFile($file, string $path): string
+    private function storeUploadedFile(UploadedFile $file, string $path): string
     {
         $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
 

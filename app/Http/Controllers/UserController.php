@@ -3,19 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class UserController extends Controller
 {
     /**
      * Display a listing of the users.
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $query = User::query();
 
@@ -57,7 +59,7 @@ class UserController extends Controller
     /**
      * Show the form for creating a new user.
      */
-    public function create()
+    public function create(): Response
     {
         return Inertia::render('users/create');
     }
@@ -65,7 +67,7 @@ class UserController extends Controller
     /**
      * Store a newly created user in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         // Validasi data dengan aturan ketat
         $validated = $request->validate([
@@ -96,7 +98,7 @@ class UserController extends Controller
     /**
      * Display the specified user.
      */
-    public function show(User $user)
+    public function show(User $user): Response
     {
         return Inertia::render('users/view', [
             'user' => $user,
@@ -106,7 +108,7 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified user.
      */
-    public function edit(User $user)
+    public function edit(User $user): Response
     {
         return Inertia::render('users/edit', [
             'user' => $user,
@@ -116,7 +118,7 @@ class UserController extends Controller
     /**
      * Update the specified user in storage.
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user): RedirectResponse
     {
         // Validasi data
         $validated = $request->validate([
@@ -158,7 +160,7 @@ class UserController extends Controller
     /**
      * Remove the specified user from storage.
      */
-    public function destroy(User $user)
+    public function destroy(User $user): RedirectResponse
     {
         // Cegah penghapusan user sendiri
         if (Auth::id() === $user->id) {
@@ -187,7 +189,7 @@ class UserController extends Controller
     /**
      * Update user password only.
      */
-    public function updatePassword(Request $request, User $user)
+    public function updatePassword(Request $request, User $user): RedirectResponse
     {
         // Validasi password
         $request->validate([
@@ -212,7 +214,7 @@ class UserController extends Controller
     /**
      * Resend email verification notification.
      */
-    public function resendVerification(User $user)
+    public function resendVerification(User $user): RedirectResponse
     {
         if ($user->hasVerifiedEmail()) {
             return back()

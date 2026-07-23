@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\PeriodePendaftaran;
 use App\Models\PendaftaranAnggota;
 use App\Models\Kerjasama;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class JoinController extends Controller
 {
-    public function join()
+    public function join(): Response
     {
         // Ambil semua data periode tanpa terkecuali, diurutkan dari yang terbaru
         $periodes = PeriodePendaftaran::orderBy('created_at', 'desc')->get();
@@ -24,7 +26,7 @@ class JoinController extends Controller
      * GET /join/anggota
      * Halaman form pendaftaran anggota.
      */
-    public function anggota()
+    public function anggota(): Response
     {
         $periode = PeriodePendaftaran::where('jenis', 'anggota')
             ->orderBy('created_at', 'desc')
@@ -39,7 +41,7 @@ class JoinController extends Controller
      * POST /join/anggota
      * Simpan data pendaftaran anggota.
      */
-    public function storeAnggota(Request $request)
+    public function storeAnggota(Request $request): RedirectResponse
     {
         // Honeypot anti-bot: field tersembunyi ("website") yang hanya bisa
         // terisi oleh bot otomatis, bukan manusia (lihat catatan di Vue).
@@ -101,7 +103,7 @@ class JoinController extends Controller
     }
 
 
-    public function kerjasamaUniversity()
+    public function kerjasamaUniversity(): Response
     {
         $periode = PeriodePendaftaran::where('jenis', 'kerjasama')
             ->orderBy('created_at', 'desc')
@@ -113,7 +115,7 @@ class JoinController extends Controller
     }
 
 
-    public function storeKerjasama(Request $request)
+    public function storeKerjasama(Request $request): RedirectResponse
     {
 
         if ($request->filled('website')) {

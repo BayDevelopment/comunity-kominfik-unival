@@ -7,10 +7,11 @@ use App\Models\Kerjasama;
 use App\Models\Layanan;
 use App\Models\Project;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class HomeController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $stats = [
             // Jumlah project yang sudah/sedang berjalan (tidak termasuk yang dibatalkan)

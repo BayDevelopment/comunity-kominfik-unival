@@ -7,8 +7,8 @@ use App\Models\Kerjasama;
 use App\Models\Layanan;
 use App\Models\PendaftaranAnggota;
 use App\Models\Project;
-use Illuminate\Support\Carbon;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -27,6 +27,8 @@ class DashboardController extends Controller
      * Ringkasan angka total tiap modul (untuk 4 kartu di atas).
      * Total di sini mencakup SEMUA status (bukan cuma yang aktif/disetujui),
      * karena ini dashboard internal admin, bukan halaman publik.
+     *
+     * @return array{project: int, kerjasama: int, layanan: int, member: int}
      */
     private function getStats(): array
     {
@@ -40,6 +42,8 @@ class DashboardController extends Controller
 
     /**
      * Data grafik: jumlah project baru per bulan, 6 bulan terakhir.
+     *
+     * @return array{labels: array<int, string>, data: array<int, int>}
      */
     private function getChartData(): array
     {
@@ -64,6 +68,8 @@ class DashboardController extends Controller
     /**
      * Aktivitas terbaru, digabung dari beberapa tabel (project, kerjasama,
      * pendaftaran anggota), diurutkan dari yang paling baru, diambil 5 teratas.
+     *
+     * @return array<int, array{type: string, title: string, description: string, time: string}>
      */
     private function getRecentActivities(): array
     {

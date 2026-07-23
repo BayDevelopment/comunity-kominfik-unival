@@ -3,18 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Anggota;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Inertia\Inertia;
 use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AnggotaController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $query = Anggota::query();
 
@@ -52,7 +54,7 @@ class AnggotaController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): Response
     {
         return Inertia::render('anggota/create');
     }
@@ -60,7 +62,7 @@ class AnggotaController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         if (!Auth::user()->can('create-anggota')) {
             abort(403, 'Anda tidak memiliki akses!');
@@ -117,7 +119,7 @@ class AnggotaController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Anggota $anggota)
+    public function show(Anggota $anggota): Response
     {
         return Inertia::render('anggota/view', [
             'anggota' => [
@@ -132,7 +134,7 @@ class AnggotaController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Anggota $anggota)
+    public function edit(Anggota $anggota): Response
     {
         return Inertia::render('anggota/edit', [
             'anggota' => [
@@ -147,7 +149,7 @@ class AnggotaController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Anggota $anggota)
+    public function update(Request $request, Anggota $anggota): RedirectResponse
     {
         if (!Auth::user()->can('update-anggota')) {
             abort(403, 'Anda tidak memiliki akses!');
@@ -204,13 +206,11 @@ class AnggotaController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy(Anggota $anggota): RedirectResponse
     {
         if (!Auth::user()->can('delete-anggota')) {
             abort(403, 'Anda tidak memiliki akses!');
         }
-
-        $anggota = Anggota::findOrFail($id);
 
         if ($anggota->foto && Storage::disk('public')->exists($anggota->foto)) {
             Storage::disk('public')->delete($anggota->foto);

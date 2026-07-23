@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PendaftaranKerjasamaDiterima;
 use App\Models\Kerjasama;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -93,6 +95,7 @@ class PendaftaranKerjasamaController extends Controller
     /**
      * Menyimpan pendaftaran kerjasama baru.
      */
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $this->validateKerjasama($request);
@@ -129,6 +132,16 @@ class PendaftaranKerjasamaController extends Controller
                 fn() => Kerjasama::query()->create($data),
                 3,
             );
+
+            // Kirim email konfirmasi ke PIC — kegagalan kirim email
+            // tidak boleh menggagalkan pengajuan yang sudah tersimpan
+            try {
+                Mail::to($pendaftaran->email_pic)->send(
+                    new PendaftaranKerjasamaDiterima($pendaftaran),
+                );
+            } catch (Throwable $mailException) {
+                report($mailException);
+            }
 
             return redirect()
                 ->route('pendaftaran-kerjasama.show', [

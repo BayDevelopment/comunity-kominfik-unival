@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PendaftaranAnggotaDiterima;
 use App\Models\Anggota;
 use App\Models\PendaftaranAnggota;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -95,7 +97,7 @@ class PendaftaranAnggotaController extends Controller
             'foto.max' => 'Ukuran foto maksimal 1MB.',
         ]);
 
-        DB::transaction(function () use ($request, &$data) {
+        $pendaftaran = DB::transaction(function () use ($request, &$data) {
             if ($request->hasFile('foto')) {
                 $data['foto'] = $this->storeUploadedFile($request->file('foto'), self::FOTO_PATH);
             }
@@ -111,8 +113,16 @@ class PendaftaranAnggotaController extends Controller
                 $data['tanggal_diproses'] = now();
             }
 
-            PendaftaranAnggota::create($data);
+            return PendaftaranAnggota::create($data);
         });
+
+        // Kirim email konfirmasi setelah data berhasil disimpan
+        try {
+            Mail::to($pendaftaran->email)->send(new PendaftaranAnggotaDiterima($pendaftaran));
+        } catch (\Throwable $e) {
+            // Jangan gagalkan proses pendaftaran hanya karena email gagal terkirim
+            report($e);
+        }
 
         return redirect()
             ->route('pendaftaran-anggota.index')

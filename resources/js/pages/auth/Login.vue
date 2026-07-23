@@ -14,7 +14,6 @@ import { ref } from 'vue';
 
 import AppAuthLogo from '@/components/AppAuthLogo.vue';
 
-import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 
@@ -205,15 +204,6 @@ const submit = () => {
                                     stroke-width="2.5" />
                             </button>
                         </form>
-
-                        <p class="mt-6 text-center text-sm font-semibold text-slate-500 sm:mt-8">
-                            Belum punya akun?
-
-                            <Link :href="register().url"
-                                class="font-black text-orange-600 transition hover:text-orange-700 hover:underline">
-                                Daftar sekarang
-                            </Link>
-                        </p>
                     </div>
                 </div>
             </div>

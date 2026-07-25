@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PendaftaranAnggotaDiterima;
 use App\Models\PeriodePendaftaran;
 use App\Models\PendaftaranAnggota;
 use App\Models\Kerjasama;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -90,7 +92,14 @@ class JoinController extends Controller
             $validated['foto'] = $request->file('foto')->store('pendaftaran/foto', 'public');
         }
 
-        PendaftaranAnggota::create($validated);
+        $pendaftaran = PendaftaranAnggota::create($validated);
+
+        // Kirim email konfirmasi "pendaftaran berhasil dikirim"
+        try {
+            Mail::to($pendaftaran->email)->send(new PendaftaranAnggotaDiterima($pendaftaran));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return redirect()
             ->back()
@@ -101,6 +110,7 @@ class JoinController extends Controller
                 ],
             ]);
     }
+
 
 
     public function kerjasamaUniversity(): Response

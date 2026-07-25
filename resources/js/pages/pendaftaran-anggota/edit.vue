@@ -67,6 +67,10 @@ const form = useForm({
     alasan_bergabung: props.pendaftaran.alasan_bergabung ?? '',
     status: props.pendaftaran.status,
     catatan_admin: props.pendaftaran.catatan_admin ?? '',
+    // ⬇️ FIELD BARU — wajib diisi kalau status = diterima
+    jabatan: '',
+    divisi: '',
+    tanggal_bergabung: '',
     file_cv: null as File | null,
     foto: null as File | null,
 });
@@ -141,6 +145,20 @@ function submit() {
         </div>
 
         <form class="space-y-6" @submit.prevent="submit">
+            <!-- ⬇️ BANNER ERROR UMUM -->
+            <div v-if="Object.keys(form.errors).length > 0"
+                class="rounded-lg border border-rose-300 bg-rose-50 p-4 dark:border-rose-500/30 dark:bg-rose-500/10">
+                <p class="mb-2 text-sm font-semibold text-rose-700 dark:text-rose-400">
+                    Gagal menyimpan, ada {{ Object.keys(form.errors).length }} error:
+                </p>
+                <ul class="list-disc space-y-1 pl-5 text-sm text-rose-600 dark:text-rose-400">
+                    <li v-for="(msg, field) in form.errors" :key="field">
+                        <strong>{{ field }}</strong>: {{ msg }}
+                    </li>
+                </ul>
+            </div>
+            <!-- ⬆️ SAMPAI SINI -->
+
             <!-- Data Diri -->
             <div class="rounded-xl border bg-background p-6 shadow-sm">
                 <div class="mb-5 flex items-center gap-2">
@@ -405,6 +423,52 @@ function submit() {
                             {{ form.errors.catatan_admin }}
                         </p>
                     </div>
+
+                    <!-- ⬇️ FIELD KHUSUS SAAT STATUS "DITERIMA" -->
+                    <template v-if="form.status === 'diterima'">
+                        <div
+                            class="sm:col-span-2 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
+                            <p class="mb-4 text-xs font-medium text-amber-700 dark:text-amber-400">
+                                Data ini wajib diisi karena pendaftar akan langsung dibuat menjadi Anggota
+                            </p>
+
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-medium">Jabatan <span
+                                            class="text-rose-500">*</span></label>
+                                    <input v-model="form.jabatan" type="text" placeholder="Contoh: Staff"
+                                        class="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none transition-shadow focus:ring-2 focus:ring-ring"
+                                        :class="{ 'border-rose-500': form.errors.jabatan }" />
+                                    <p v-if="form.errors.jabatan" class="mt-1 text-xs text-rose-500">
+                                        {{ form.errors.jabatan }}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-medium">Divisi <span
+                                            class="text-rose-500">*</span></label>
+                                    <input v-model="form.divisi" type="text" placeholder="Contoh: Humas"
+                                        class="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none transition-shadow focus:ring-2 focus:ring-ring"
+                                        :class="{ 'border-rose-500': form.errors.divisi }" />
+                                    <p v-if="form.errors.divisi" class="mt-1 text-xs text-rose-500">
+                                        {{ form.errors.divisi }}
+                                    </p>
+                                </div>
+
+                                <div class="sm:col-span-2">
+                                    <label class="mb-1.5 block text-sm font-medium">Tanggal Bergabung <span
+                                            class="text-rose-500">*</span></label>
+                                    <input v-model="form.tanggal_bergabung" type="date"
+                                        class="w-full rounded-lg border bg-background px-3 py-2.5 text-sm outline-none transition-shadow focus:ring-2 focus:ring-ring"
+                                        :class="{ 'border-rose-500': form.errors.tanggal_bergabung }" />
+                                    <p v-if="form.errors.tanggal_bergabung" class="mt-1 text-xs text-rose-500">
+                                        {{ form.errors.tanggal_bergabung }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <!-- ⬆️ SAMPAI SINI -->
                 </div>
             </div>
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pendaftaran Anggota KOMINFIK</title>
+    <title>Selamat Bergabung - KOMINFIK</title>
 
     <style>
         @media only screen and (max-width: 600px) {
@@ -38,28 +38,28 @@
 </head>
 
 <body
-    style="margin:0; padding:0; background-color:#fff7ed; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    style="margin:0; padding:0; background-color:#f0fdf4; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fff7ed;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0fdf4;">
         <tr>
             <td class="email-outer-padding" align="center" style="padding:32px 16px;">
 
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                    style="max-width:600px; background-color:#ffffff; border-radius:24px; border:1px solid #ffedd5; overflow:hidden; box-shadow:0 4px 24px rgba(249,115,22,0.08);">
+                    style="max-width:600px; background-color:#ffffff; border-radius:24px; border:1px solid #dcfce7; overflow:hidden; box-shadow:0 4px 24px rgba(34,197,94,0.08);">
 
                     <!-- Header gradient -->
                     <tr>
                         <td class="email-header"
-                            style="background:linear-gradient(135deg,#f97316,#fbbf24); padding:32px 40px; text-align:center;">
+                            style="background:linear-gradient(135deg,#16a34a,#4ade80); padding:32px 40px; text-align:center;">
                             <div
                                 style="display:inline-flex; align-items:center; justify-content:center; width:56px; height:56px; background-color:rgba(255,255,255,0.2); border-radius:16px; margin-bottom:16px;">
-                                <span style="font-size:26px; line-height:56px;">&#128075;</span>
+                                <span style="font-size:26px; line-height:56px;">&#127881;</span>
                             </div>
                             <h1 class="email-h1"
                                 style="margin:0; color:#ffffff; font-size:22px; font-weight:900; letter-spacing:-0.02em;">
-                                Pendaftaran Berhasil Dikirim
+                                Selamat Bergabung!
                             </h1>
-                            <p style="margin:6px 0 0; color:#fff7ed; font-size:13px; font-weight:600;">
+                            <p style="margin:6px 0 0; color:#f0fdf4; font-size:13px; font-weight:600;">
                                 KOMINFIK &middot; Pendaftaran Anggota
                             </p>
                         </td>
@@ -74,32 +74,33 @@
                             </p>
 
                             <p style="margin:0 0 28px; font-size:14px; line-height:1.7; color:#334155;">
-                                Terima kasih telah mendaftar sebagai anggota <strong>KOMINFIK</strong>. Data kamu sudah
-                                kami terima dan sedang dalam proses peninjauan oleh tim kami.
+                                Selamat! Setelah melalui proses peninjauan, kami dengan senang hati mengumumkan bahwa
+                                kamu <strong>resmi diterima</strong> sebagai anggota <strong>KOMINFIK</strong>. Kami
+                                menantikan kontribusi dan kolaborasi bersamamu ke depannya.
                             </p>
 
                             <!-- Badge status -->
                             <table role="presentation" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
                                 <tr>
                                     <td
-                                        style="background-color:#fff7ed; border:1px solid #fed7aa; border-radius:9999px; padding:8px 16px;">
+                                        style="background-color:#f0fdf4; border:1px solid #bbf7d0; border-radius:9999px; padding:8px 16px;">
                                         <span
-                                            style="display:inline-block; width:8px; height:8px; background-color:#f97316; border-radius:9999px; margin-right:8px; vertical-align:middle;"></span>
+                                            style="display:inline-block; width:8px; height:8px; background-color:#16a34a; border-radius:9999px; margin-right:8px; vertical-align:middle;"></span>
                                         <span
-                                            style="font-size:12px; font-weight:800; color:#c2410c; vertical-align:middle;">Status:
-                                            Menunggu Peninjauan</span>
+                                            style="font-size:12px; font-weight:800; color:#15803d; vertical-align:middle;">Status:
+                                            Diterima sebagai Anggota</span>
                                     </td>
                                 </tr>
                             </table>
 
                             <!-- Ringkasan data card -->
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                                style="background-color:#fffbeb; border:1px solid #ffedd5; border-radius:16px; margin-bottom:28px;">
+                                style="background-color:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; margin-bottom:28px;">
                                 <tr>
                                     <td class="email-summary-card" style="padding:24px;">
                                         <p
-                                            style="margin:0 0 16px; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.08em; color:#ea580c;">
-                                            Ringkasan Data Pendaftar
+                                            style="margin:0 0 16px; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.08em; color:#15803d;">
+                                            Detail Keanggotaan
                                         </p>
 
                                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -112,43 +113,40 @@
                                             </tr>
                                             <tr>
                                                 <td
-                                                    style="padding:8px 0; font-size:13px; color:#78716c; border-top:1px solid #ffedd5;">
-                                                    NIM / NIS</td>
-                                                <td
-                                                    style="padding:8px 0; font-size:13px; color:#0f172a; font-weight:700; border-top:1px solid #ffedd5;">
-                                                    {{ $pendaftaran->nim_nis }}</td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    style="padding:8px 0; font-size:13px; color:#78716c; border-top:1px solid #ffedd5;">
-                                                    Jenjang</td>
-                                                <td
-                                                    style="padding:8px 0; font-size:13px; color:#0f172a; font-weight:700; border-top:1px solid #ffedd5; text-transform:uppercase;">
-                                                    {{ $pendaftaran->jenjang }}</td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    style="padding:8px 0; font-size:13px; color:#78716c; border-top:1px solid #ffedd5;">
-                                                    Asal Instansi</td>
-                                                <td
-                                                    style="padding:8px 0; font-size:13px; color:#0f172a; font-weight:700; border-top:1px solid #ffedd5;">
-                                                    {{ $pendaftaran->asal_instansi }}</td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    style="padding:8px 0; font-size:13px; color:#78716c; border-top:1px solid #ffedd5;">
+                                                    style="padding:8px 0; font-size:13px; color:#78716c; border-top:1px solid #e2e8f0;">
                                                     Email</td>
                                                 <td
-                                                    style="padding:8px 0; font-size:13px; color:#0f172a; font-weight:700; border-top:1px solid #ffedd5;">
+                                                    style="padding:8px 0; font-size:13px; color:#0f172a; font-weight:700; border-top:1px solid #e2e8f0;">
                                                     {{ $pendaftaran->email }}</td>
                                             </tr>
+                                            @if ($anggota->jabatan)
+                                                <tr>
+                                                    <td
+                                                        style="padding:8px 0; font-size:13px; color:#78716c; border-top:1px solid #e2e8f0;">
+                                                        Jabatan</td>
+                                                    <td
+                                                        style="padding:8px 0; font-size:13px; color:#0f172a; font-weight:700; border-top:1px solid #e2e8f0;">
+                                                        {{ $anggota->jabatan }}</td>
+                                                </tr>
+                                            @endif
+                                            @if ($anggota->divisi)
+                                                <tr>
+                                                    <td
+                                                        style="padding:8px 0; font-size:13px; color:#78716c; border-top:1px solid #e2e8f0;">
+                                                        Divisi</td>
+                                                    <td
+                                                        style="padding:8px 0; font-size:13px; color:#0f172a; font-weight:700; border-top:1px solid #e2e8f0;">
+                                                        {{ $anggota->divisi }}</td>
+                                                </tr>
+                                            @endif
                                             <tr>
                                                 <td
-                                                    style="padding:8px 0; font-size:13px; color:#78716c; border-top:1px solid #ffedd5;">
-                                                    No. Telepon</td>
+                                                    style="padding:8px 0; font-size:13px; color:#78716c; border-top:1px solid #e2e8f0;">
+                                                    Tanggal Bergabung</td>
                                                 <td
-                                                    style="padding:8px 0; font-size:13px; color:#0f172a; font-weight:700; border-top:1px solid #ffedd5;">
-                                                    {{ $pendaftaran->no_telepon }}</td>
+                                                    style="padding:8px 0; font-size:13px; color:#0f172a; font-weight:700; border-top:1px solid #e2e8f0;">
+                                                    {{ \Carbon\Carbon::parse($anggota->tanggal_bergabung)->translatedFormat('d F Y') }}
+                                                </td>
                                             </tr>
                                         </table>
                                     </td>
@@ -156,8 +154,9 @@
                             </table>
 
                             <p style="margin:0 0 28px; font-size:14px; line-height:1.7; color:#334155;">
-                                Tim kami akan menghubungi kamu melalui email ini setelah proses seleksi selesai. Mohon
-                                pantau kotak masuk (dan folder spam) secara berkala.
+                                Informasi lebih lanjut mengenai kegiatan dan agenda organisasi akan disampaikan melalui
+                                email ini atau kanal komunikasi resmi KOMINFIK. Jangan ragu untuk menghubungi kami jika
+                                ada pertanyaan.
                             </p>
 
                             <!-- Button -->
@@ -165,7 +164,7 @@
                                 <tr>
                                     <td align="center">
                                         <a href="{{ config('app.url') }}" class="email-cta-btn"
-                                            style="display:inline-block; background:linear-gradient(135deg,#f97316,#fbbf24); color:#ffffff; text-decoration:none; font-size:14px; font-weight:800; padding:14px 32px; border-radius:16px; box-shadow:0 4px 12px rgba(249,115,22,0.3);">
+                                            style="display:inline-block; background:linear-gradient(135deg,#16a34a,#4ade80); color:#ffffff; text-decoration:none; font-size:14px; font-weight:800; padding:14px 32px; border-radius:16px; box-shadow:0 4px 12px rgba(22,163,74,0.3);">
                                             Kunjungi Website Kami
                                         </a>
                                     </td>

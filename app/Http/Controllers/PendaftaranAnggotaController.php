@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Mail\PendaftaranAnggotaDiterima;
+use App\Mail\PendaftaranDiterima;
+use App\Mail\PendaftaranDitolak;
 use App\Models\Anggota;
 use App\Models\PendaftaranAnggota;
 use Illuminate\Database\QueryException;
@@ -10,6 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -62,43 +65,51 @@ class PendaftaranAnggotaController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'nama' => ['required', 'string', 'max:255'],
-            'nim_nis' => ['required', 'string', 'max:50'],
-            'asal_instansi' => ['required', 'string', 'max:255'],
-            'jenjang' => ['required', Rule::in(['mahasiswa', 'sma', 'smk'])],
-            'jurusan_prodi' => ['nullable', 'string', 'max:255'],
-            'angkatan' => ['nullable', 'string', 'max:10'],
+            'nama'             => ['required', 'string', 'max:255'],
+            'nim_nis'          => ['required', 'string', 'max:50'],
+            'asal_instansi'    => ['required', 'string', 'max:255'],
+            'jenjang'          => ['required', Rule::in(['mahasiswa', 'sma', 'smk'])],
+            'jurusan_prodi'    => ['nullable', 'string', 'max:255'],
+            'angkatan'         => ['nullable', 'string', 'max:10'],
             'email' => [
                 'required',
                 'string',
                 'email',
                 'max:255',
                 'unique:pendaftaran_anggotas,email',
-                'unique:anggotas,email', // tambahan: tidak boleh sama dengan anggota yang sudah ada
+                'unique:anggotas,email',
             ],
             'no_telepon' => [
                 'required',
                 'string',
                 'max:20',
                 'regex:/^[0-9+\-\s]+$/',
-                'unique:anggotas,no_telepon', // tambahan
+                'unique:anggotas,no_telepon',
+                'unique:pendaftaran_anggotas,no_telepon', // tambahan: konsisten dg terima()
             ],
-            'alamat' => ['nullable', 'string', 'max:1000'],
-            'alasan_bergabung' => ['nullable', 'string', 'max:2000'],
-            'file_cv' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:1024'],
-            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:1024'],
-            'status' => ['sometimes', Rule::in(['pending', 'diterima', 'ditolak'])],
-            'catatan_admin' => ['nullable', 'string', 'max:2000'],
+            'alamat'            => ['nullable', 'string', 'max:1000'],
+            'alasan_bergabung'  => ['nullable', 'string', 'max:2000'],
+            'file_cv'           => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:1024'],
+            'foto'              => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:1024'],
+            'status'            => ['sometimes', Rule::in(['pending', 'diterima', 'ditolak'])],
+            'catatan_admin'     => ['nullable', 'string', 'max:2000'],
+            // field tambahan khusus jika status langsung "diterima"
+            'jabatan'           => ['required_if:status,diterima', 'nullable', 'string', 'max:255'],
+            'divisi'            => ['required_if:status,diterima', 'nullable', 'string', 'max:255'],
+            'tanggal_bergabung' => ['required_if:status,diterima', 'nullable', 'date'],
         ], [
-            'email.unique' => 'Email ini sudah terdaftar.',
-            'no_telepon.unique' => 'No. telepon ini sudah digunakan oleh anggota lain.',
-            'file_cv.mimes' => 'File CV harus berformat PDF, DOC, atau DOCX.',
-            'file_cv.max' => 'Ukuran file CV maksimal 1MB.',
-            'foto.image' => 'File foto harus berupa gambar.',
-            'foto.max' => 'Ukuran foto maksimal 1MB.',
+            'email.unique'       => 'Email ini sudah terdaftar.',
+            'no_telepon.unique'  => 'No. telepon ini sudah digunakan oleh anggota lain.',
+            'file_cv.mimes'      => 'File CV harus berformat PDF, DOC, atau DOCX.',
+            'file_cv.max'        => 'Ukuran file CV maksimal 1MB.',
+            'foto.image'         => 'File foto harus berupa gambar.',
+            'foto.max'           => 'Ukuran foto maksimal 1MB.',
         ]);
 
-        $pendaftaran = DB::transaction(function () use ($request, &$data) {
+        $status = $data['status'] ?? 'pending';
+        $anggota = null;
+
+        $pendaftaran = DB::transaction(function () use ($request, &$data, $status, &$anggota) {
             if ($request->hasFile('foto')) {
                 $data['foto'] = $this->storeUploadedFile($request->file('foto'), self::FOTO_PATH);
             }
@@ -107,21 +118,49 @@ class PendaftaranAnggotaController extends Controller
                 $data['file_cv'] = $this->storeUploadedFile($request->file('file_cv'), self::CV_PATH);
             }
 
-            // Karena ini input admin, kalau admin langsung set status selain pending,
-            // catat siapa & kapan yang memproses.
-            if (($data['status'] ?? 'pending') !== 'pending') {
-                $data['diproses_oleh'] = $request->user()->id;
+            if ($status !== 'pending') {
+                $data['diproses_oleh']    = $request->user()->id;
                 $data['tanggal_diproses'] = now();
             }
 
-            return PendaftaranAnggota::create($data);
+            // Simpan field khusus Anggota, JANGAN ikut disimpan ke pendaftaran_anggotas
+            $jabatan           = $data['jabatan'] ?? null;
+            $divisi            = $data['divisi'] ?? null;
+            $tanggalBergabung  = $data['tanggal_bergabung'] ?? null;
+            unset($data['jabatan'], $data['divisi'], $data['tanggal_bergabung']);
+
+            $pendaftaran = PendaftaranAnggota::create($data);
+
+            // FIX BUG #1: kalau admin set status "diterima" langsung,
+            // pastikan record Anggota juga dibuat — sama seperti alur terima()
+            if ($status === 'diterima') {
+                $anggota = Anggota::create([
+                    'nama'              => $pendaftaran->nama,
+                    'foto'              => $pendaftaran->foto,
+                    'email'             => $pendaftaran->email,
+                    'no_telepon'        => $pendaftaran->no_telepon,
+                    'jabatan'           => $jabatan,
+                    'divisi'            => $divisi,
+                    'alamat'            => $pendaftaran->alamat,
+                    'tanggal_bergabung' => $tanggalBergabung,
+                    'status'            => 'aktif',
+                ]);
+            }
+
+            return $pendaftaran;
         });
 
-        // Kirim email konfirmasi setelah data berhasil disimpan
+        if ($status === 'diterima' && ! $anggota instanceof Anggota) {
+            throw new \RuntimeException('Gagal membuat data anggota saat pendaftaran diterima.');
+        }
+
         try {
-            Mail::to($pendaftaran->email)->send(new PendaftaranAnggotaDiterima($pendaftaran));
+            match ($status) {
+                'diterima' => Mail::to($pendaftaran->email)->send(new PendaftaranDiterima($pendaftaran, $anggota)),
+                'ditolak'  => Mail::to($pendaftaran->email)->send(new PendaftaranDitolak($pendaftaran)),
+                default    => Mail::to($pendaftaran->email)->send(new PendaftaranAnggotaDiterima($pendaftaran)),
+            };
         } catch (\Throwable $e) {
-            // Jangan gagalkan proses pendaftaran hanya karena email gagal terkirim
             report($e);
         }
 
@@ -129,11 +168,12 @@ class PendaftaranAnggotaController extends Controller
             ->route('pendaftaran-anggota.index')
             ->with('flash', [
                 'toast' => [
-                    'type' => 'success',
+                    'type'    => 'success',
                     'message' => 'Pendaftaran anggota berhasil dibuat.',
                 ],
             ]);
     }
+
 
     public function show(PendaftaranAnggota $pendaftaranAnggota): Response
     {
@@ -152,66 +192,135 @@ class PendaftaranAnggotaController extends Controller
     public function update(Request $request, PendaftaranAnggota $pendaftaranAnggota): RedirectResponse
     {
         $data = $request->validate([
-            'nama' => ['required', 'string', 'max:255'],
-            'nim_nis' => ['required', 'string', 'max:50'],
-            'asal_instansi' => ['required', 'string', 'max:255'],
-            'jenjang' => ['required', Rule::in(['mahasiswa', 'sma', 'smk'])],
-            'jurusan_prodi' => ['nullable', 'string', 'max:255'],
-            'angkatan' => ['nullable', 'string', 'max:10'],
+            'nama'             => ['required', 'string', 'max:255'],
+            'nim_nis'          => ['required', 'string', 'max:50'],
+            'asal_instansi'    => ['required', 'string', 'max:255'],
+            'jenjang'          => ['required', Rule::in(['mahasiswa', 'sma', 'smk'])],
+            'jurusan_prodi'    => ['nullable', 'string', 'max:255'],
+            'angkatan'         => ['nullable', 'string', 'max:10'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('pendaftaran_anggotas', 'email')->ignore($pendaftaranAnggota->id)],
-            'no_telepon' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s]+$/'],
-            'alamat' => ['nullable', 'string', 'max:1000'],
+            'no_telepon'       => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s]+$/'],
+            'alamat'           => ['nullable', 'string', 'max:1000'],
             'alasan_bergabung' => ['nullable', 'string', 'max:2000'],
-            'file_cv' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:1024'],
-            'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:1024'],
-            'status' => ['sometimes', Rule::in(['pending', 'diterima', 'ditolak'])],
-            'catatan_admin' => ['nullable', 'string', 'max:2000'],
+            'file_cv'          => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:1024'],
+            'foto'             => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:1024'],
+            'status'           => ['sometimes', Rule::in(['pending', 'diterima', 'ditolak'])],
+            'catatan_admin'    => ['nullable', 'string', 'max:2000'],
+            'jabatan'          => ['required_if:status,diterima', 'nullable', 'string', 'max:255'],
+            'divisi'           => ['required_if:status,diterima', 'nullable', 'string', 'max:255'],
+            'tanggal_bergabung' => ['required_if:status,diterima', 'nullable', 'date'],
         ], [
-            'email.unique' => 'Email ini sudah terdaftar.',
-            'file_cv.mimes' => 'File CV harus berformat PDF, DOC, atau DOCX.',
-            'file_cv.max' => 'Ukuran file CV maksimal 1MB.',
-            'foto.image' => 'File foto harus berupa gambar.',
-            'foto.max' => 'Ukuran foto maksimal 1MB.',
+            'email.unique'    => 'Email ini sudah terdaftar.',
+            'file_cv.mimes'   => 'File CV harus berformat PDF, DOC, atau DOCX.',
+            'file_cv.max'     => 'Ukuran file CV maksimal 1MB.',
+            'foto.image'      => 'File foto harus berupa gambar.',
+            'foto.max'        => 'Ukuran foto maksimal 1MB.',
         ]);
 
-        // ⬇️ TAMBAHKAN INI
         if (!$request->hasFile('foto')) {
             unset($data['foto']);
         }
-
         if (!$request->hasFile('file_cv')) {
             unset($data['file_cv']);
         }
-        // ⬆️ SAMPAI SINI
 
-        DB::transaction(function () use ($request, $pendaftaranAnggota, &$data) {
-            if ($request->hasFile('foto')) {
-                $this->deleteFileIfExists($pendaftaranAnggota->foto);
-                $data['foto'] = $this->storeUploadedFile($request->file('foto'), self::FOTO_PATH);
+        $statusLama    = $pendaftaranAnggota->status;
+        $statusBaru    = $data['status'] ?? $statusLama;
+        $statusBerubah = $statusBaru !== $statusLama;
+
+        // ❌ Guard "harus dari pending" DIHAPUS — status sekarang bisa diubah kapan saja
+
+        $jabatan          = $data['jabatan'] ?? null;
+        $divisi           = $data['divisi'] ?? null;
+        $tanggalBergabung = $data['tanggal_bergabung'] ?? null;
+        unset($data['jabatan'], $data['divisi'], $data['tanggal_bergabung']);
+
+        $anggota = null;
+
+        try {
+            DB::transaction(function () use ($request, $pendaftaranAnggota, &$data, $statusBerubah, $statusBaru, $statusLama, $jabatan, $divisi, $tanggalBergabung, &$anggota) {
+                if ($request->hasFile('foto')) {
+                    $this->deleteFileIfExists($pendaftaranAnggota->foto);
+                    $data['foto'] = $this->storeUploadedFile($request->file('foto'), self::FOTO_PATH);
+                }
+
+                if ($request->hasFile('file_cv')) {
+                    $this->deleteFileIfExists($pendaftaranAnggota->file_cv);
+                    $data['file_cv'] = $this->storeUploadedFile($request->file('file_cv'), self::CV_PATH);
+                }
+
+                if ($statusBerubah) {
+                    $data['diproses_oleh']    = $request->user()->id;
+                    $data['tanggal_diproses'] = now();
+                }
+
+                $pendaftaranAnggota->update($data);
+
+                // Status berubah JADI "diterima" → buat record Anggota (kalau belum ada)
+                if ($statusBerubah && $statusBaru === 'diterima') {
+                    $anggota = Anggota::where('email', $pendaftaranAnggota->email)->first();
+
+                    if (! $anggota) {
+                        $errors = [];
+
+                        if (Anggota::where('no_telepon', $pendaftaranAnggota->no_telepon)->exists()) {
+                            $errors['no_telepon'] = "No. telepon \"{$pendaftaranAnggota->no_telepon}\" sudah dipakai anggota lain.";
+                        }
+                        if (!empty($errors)) {
+                            throw ValidationException::withMessages($errors);
+                        }
+
+                        $anggota = Anggota::create([
+                            'nama'              => $pendaftaranAnggota->nama,
+                            'foto'              => $pendaftaranAnggota->foto,
+                            'email'             => $pendaftaranAnggota->email,
+                            'no_telepon'        => $pendaftaranAnggota->no_telepon,
+                            'jabatan'           => $jabatan,
+                            'divisi'            => $divisi,
+                            'alamat'            => $pendaftaranAnggota->alamat,
+                            'tanggal_bergabung' => $tanggalBergabung,
+                            'status'            => 'aktif',
+                        ]);
+                    }
+                }
+
+                // Status BERUBAH DARI "diterima" ke status lain → nonaktifkan record Anggota terkait
+                if ($statusBerubah && $statusLama === 'diterima' && $statusBaru !== 'diterima') {
+                    Anggota::where('email', $pendaftaranAnggota->email)->update(['status' => 'nonaktif']);
+                }
+            });
+        } catch (QueryException $e) {
+            if ($e->getCode() === '23000') {
+                throw ValidationException::withMessages([
+                    'email' => 'Email atau No. telepon sudah dipakai oleh anggota lain. Silakan cek kembali.',
+                ]);
             }
+            throw $e;
+        }
 
-            if ($request->hasFile('file_cv')) {
-                $this->deleteFileIfExists($pendaftaranAnggota->file_cv);
-                $data['file_cv'] = $this->storeUploadedFile($request->file('file_cv'), self::CV_PATH);
+        // Kirim email SETIAP KALI status berubah jadi diterima/ditolak
+        if ($statusBerubah) {
+            try {
+                match ($statusBaru) {
+                    'diterima' => Mail::to($pendaftaranAnggota->email)->send(new PendaftaranDiterima($pendaftaranAnggota, $anggota)),
+                    'ditolak'  => Mail::to($pendaftaranAnggota->email)->send(new PendaftaranDitolak($pendaftaranAnggota)),
+                    default    => null,
+                };
+            } catch (\Throwable $e) {
+                report($e);
             }
-
-            if (isset($data['status']) && $data['status'] !== $pendaftaranAnggota->status) {
-                $data['diproses_oleh'] = $request->user()->id;
-                $data['tanggal_diproses'] = now();
-            }
-
-            $pendaftaranAnggota->update($data);
-        });
+        }
 
         return redirect()
             ->route('pendaftaran-anggota.index')
             ->with('flash', [
                 'toast' => [
-                    'type' => 'success',
+                    'type'    => 'success',
                     'message' => 'Data pendaftaran berhasil diperbarui.',
                 ],
             ]);
     }
+
 
     public function destroy(PendaftaranAnggota $pendaftaranAnggota): RedirectResponse
     {
@@ -258,9 +367,13 @@ class PendaftaranAnggotaController extends Controller
             throw ValidationException::withMessages($errors);
         }
 
+        // $anggota perlu ditangkap di luar closure supaya bisa dipakai untuk kirim email
+        /** @var Anggota|null $anggota */
+        $anggota = null;
+
         try {
-            DB::transaction(function () use ($pendaftaranAnggota, $validated, $request) {
-                Anggota::create([
+            DB::transaction(function () use ($pendaftaranAnggota, $validated, $request, &$anggota) {
+                $anggota = Anggota::create([
                     'nama' => $pendaftaranAnggota->nama,
                     'foto' => $pendaftaranAnggota->foto,
                     'email' => $pendaftaranAnggota->email,
@@ -288,6 +401,17 @@ class PendaftaranAnggotaController extends Controller
             throw $e;
         }
 
+        if (! $anggota instanceof Anggota) {
+            throw new \RuntimeException('Gagal membuat anggota.');
+        }
+
+        // Kirim email pemberitahuan diterima jadi anggota
+        try {
+            Mail::to($pendaftaranAnggota->email)->send(new PendaftaranDiterima($pendaftaranAnggota, $anggota));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return back()->with('flash', [
             'toast' => [
                 'type' => 'success',
@@ -296,8 +420,11 @@ class PendaftaranAnggotaController extends Controller
         ]);
     }
 
+
     public function tolak(Request $request, PendaftaranAnggota $pendaftaranAnggota): RedirectResponse
     {
+        Log::info('TOLAK: method dipanggil', ['id' => $pendaftaranAnggota->id]);
+
         $data = $request->validate([
             'catatan_admin' => ['nullable', 'string', 'max:2000'],
         ]);
@@ -309,6 +436,15 @@ class PendaftaranAnggotaController extends Controller
             'tanggal_diproses' => now(),
         ]);
 
+        Log::info('TOLAK: status berhasil diupdate', ['email' => $pendaftaranAnggota->email]);
+
+        try {
+            Mail::to($pendaftaranAnggota->email)->send(new PendaftaranDitolak($pendaftaranAnggota));
+            Log::info('TOLAK: email berhasil dikirim tanpa exception');
+        } catch (\Throwable $e) {
+            Log::error('TOLAK: email GAGAL', ['error' => $e->getMessage()]);
+        }
+
         return back()->with('flash', [
             'toast' => [
                 'type' => 'success',
@@ -316,6 +452,7 @@ class PendaftaranAnggotaController extends Controller
             ],
         ]);
     }
+
 
     private function storeUploadedFile(UploadedFile $file, string $path): string
     {

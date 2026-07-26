@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Kerjasama;
+use App\Models\PendaftaranAnggota;
+use App\Observers\KerjasamaObserver;
+use App\Observers\PendaftaranAnggotaObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +56,9 @@ class AppServiceProvider extends ServiceProvider
                 'message' => __('Recovery codes regenerated.'),
             ]);
         });
+
+        PendaftaranAnggota::observe(PendaftaranAnggotaObserver::class);
+        Kerjasama::observe(KerjasamaObserver::class);
     }
 
     /**

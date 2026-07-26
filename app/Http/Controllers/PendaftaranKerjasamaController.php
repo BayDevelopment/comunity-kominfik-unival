@@ -16,6 +16,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 use RuntimeException;
 use Throwable;
+use App\Mail\KerjasamaDisetujui;
+use App\Mail\KerjasamaDitolak;
 
 class PendaftaranKerjasamaController extends Controller
 {
@@ -199,6 +201,7 @@ class PendaftaranKerjasamaController extends Controller
 
         $newFiles = [];
         $filesToDelete = [];
+        $statusBerubahMenjadi = null; // <-- tambahan: tangkap perubahan status untuk email
 
         try {
             if (
@@ -228,6 +231,7 @@ class PendaftaranKerjasamaController extends Controller
                 $pendaftaran,
                 $data,
                 &$filesToDelete,
+                &$statusBerubahMenjadi, // <-- tambahan
             ) {
                 $lockedPendaftaran = Kerjasama::query()
                     ->whereKey($pendaftaran->getKey())
@@ -267,6 +271,11 @@ class PendaftaranKerjasamaController extends Controller
                         $data['diproses_oleh'] = $userId;
                         $data['tanggal_diproses'] = now();
                     }
+
+                    // tandai perubahan status untuk trigger email di luar transaction
+                    if (in_array($statusBaru, ['disetujui', 'ditolak'], true)) {
+                        $statusBerubahMenjadi = $statusBaru;
+                    }
                 }
 
                 if ($statusBaru !== 'ditolak') {
@@ -277,6 +286,22 @@ class PendaftaranKerjasamaController extends Controller
             }, 3);
 
             Storage::disk('public')->delete($filesToDelete);
+
+            // Kirim email SETELAH transaksi berhasil, kalau status berubah jadi disetujui/ditolak
+            if ($statusBerubahMenjadi !== null) {
+                $freshPendaftaran = $pendaftaran->fresh();
+
+                try {
+                    match ($statusBerubahMenjadi) {
+                        'disetujui' => Mail::to($freshPendaftaran->email_pic)
+                            ->send(new KerjasamaDisetujui($freshPendaftaran)),
+                        'ditolak' => Mail::to($freshPendaftaran->email_pic)
+                            ->send(new KerjasamaDitolak($freshPendaftaran)),
+                    };
+                } catch (Throwable $mailException) {
+                    report($mailException);
+                }
+            }
 
             return redirect()
                 ->route('pendaftaran-kerjasama.show', [
@@ -620,6 +645,24 @@ class PendaftaranKerjasamaController extends Controller
 
                 $lockedPendaftaran->save();
             }, 3);
+
+            // Kirim email SETELAH transaksi database berhasil commit.
+            // Ambil data terbaru langsung dari DB supaya field seperti
+            // catatan_admin & tanggal_diproses sudah ter-update.
+            if (in_array($newStatus, ['disetujui', 'ditolak'], true)) {
+                $freshPendaftaran = $pendaftaran->fresh();
+
+                try {
+                    match ($newStatus) {
+                        'disetujui' => Mail::to($freshPendaftaran->email_pic)
+                            ->send(new KerjasamaDisetujui($freshPendaftaran)),
+                        'ditolak' => Mail::to($freshPendaftaran->email_pic)
+                            ->send(new KerjasamaDitolak($freshPendaftaran)),
+                    };
+                } catch (Throwable $mailException) {
+                    report($mailException);
+                }
+            }
 
             return back()->with('flash', [
                 'toast' => [

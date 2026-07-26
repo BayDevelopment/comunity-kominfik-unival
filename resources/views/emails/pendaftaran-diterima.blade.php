@@ -51,10 +51,18 @@
                     <tr>
                         <td class="email-header"
                             style="background:linear-gradient(135deg,#16a34a,#4ade80); padding:32px 40px; text-align:center;">
-                            <div
-                                style="display:inline-flex; align-items:center; justify-content:center; width:56px; height:56px; background-color:rgba(255,255,255,0.2); border-radius:16px; margin-bottom:16px;">
-                                <span style="font-size:26px; line-height:56px;">&#127881;</span>
-                            </div>
+
+                            <table role="presentation" cellpadding="0" cellspacing="0" align="center"
+                                style="margin:0 auto 16px;">
+                                <tr>
+                                    <td width="56" height="56" align="center" valign="middle"
+                                        style="background-color:rgba(255,255,255,0.2); border-radius:16px;">
+                                        <img src="{{ asset('images/logo-kominfik.png') }}" alt="KOMINFIK" width="36"
+                                            height="36" style="display:block; object-fit:contain;">
+                                    </td>
+                                </tr>
+                            </table>
+
                             <h1 class="email-h1"
                                 style="margin:0; color:#ffffff; font-size:22px; font-weight:900; letter-spacing:-0.02em;">
                                 Selamat Bergabung!

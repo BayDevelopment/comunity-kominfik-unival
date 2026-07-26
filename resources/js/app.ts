@@ -1,3 +1,5 @@
+import './echo';
+import { registerSW } from 'virtual:pwa-register';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import type { DefineComponent } from 'vue';
@@ -9,6 +11,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
+
+registerSW({ immediate: true });
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -53,15 +57,15 @@ createInertiaApp({
     },
 
     setup({ el, App, props, plugin }) {
-    createApp({ render: () => h(App, props) })
-        .use(plugin)
-        .mount(el);
+        createApp({ render: () => h(App, props) })
+            .use(plugin)
+            .mount(el);
 
-    // Toaster independen, mount sekali untuk semua halaman
-    const toasterEl = document.createElement('div');
-    document.body.appendChild(toasterEl);
-    createApp(GlobalToaster).mount(toasterEl);
-},
+        // Toaster independen, mount sekali untuk semua halaman
+        const toasterEl = document.createElement('div');
+        document.body.appendChild(toasterEl);
+        createApp(GlobalToaster).mount(toasterEl);
+    },
 });
 
 initializeTheme();

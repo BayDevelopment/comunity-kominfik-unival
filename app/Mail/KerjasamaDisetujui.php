@@ -6,12 +6,9 @@ use App\Models\Kerjasama;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Attachment;
-use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class PendaftaranKerjasamaDiterima extends Mailable implements ShouldQueue
+class KerjasamaDisetujui extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -19,7 +16,7 @@ class PendaftaranKerjasamaDiterima extends Mailable implements ShouldQueue
 
     public function build()
     {
-        return $this->subject('Pengajuan Kerjasama KOMINFIK Berhasil Dikirim')
-            ->view('emails.pendaftaran-kerjasama-diterima');
+        return $this->subject('Pengajuan Kerjasama KOMINFIK Disetujui')
+            ->view('emails.kerjasama-disetujui');
     }
 }

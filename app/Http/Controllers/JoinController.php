@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\PendaftaranAnggotaDiterima;
+use App\Mail\PendaftaranKerjasamaDiterima;
 use App\Models\PeriodePendaftaran;
 use App\Models\PendaftaranAnggota;
 use App\Models\Kerjasama;
@@ -94,7 +95,7 @@ class JoinController extends Controller
 
         $pendaftaran = PendaftaranAnggota::create($validated);
 
-        // Kirim email konfirmasi "pendaftaran berhasil dikirim"
+
         try {
             Mail::to($pendaftaran->email)->send(new PendaftaranAnggotaDiterima($pendaftaran));
         } catch (\Throwable $e) {
@@ -127,7 +128,6 @@ class JoinController extends Controller
 
     public function storeKerjasama(Request $request): RedirectResponse
     {
-
         if ($request->filled('website')) {
             abort(422, 'Permintaan tidak valid.');
         }
@@ -174,7 +174,13 @@ class JoinController extends Controller
         $validated['status'] = 'pending';
         $validated['tanggal_pengajuan'] = now();
 
-        Kerjasama::create($validated);
+        $kerjasama = Kerjasama::create($validated);
+
+        try {
+            Mail::to($kerjasama->email_pic)->send(new PendaftaranKerjasamaDiterima($kerjasama));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return redirect()
             ->back()

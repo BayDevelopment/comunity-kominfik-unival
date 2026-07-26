@@ -14,7 +14,7 @@ import {
     SlidersHorizontal,
 } from 'lucide-vue-next';
 import Swal from 'sweetalert2';
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { dashboard } from '@/routes';
 
 defineOptions({
@@ -274,6 +274,33 @@ function hapusPendaftaran(item: PendaftaranAnggota) {
         }
     });
 }
+
+function reloadData() {
+    router.reload({
+        only: ['pendaftarans'],
+        preserveScroll: true,
+        preserveState: true,
+    });
+}
+
+let echoDebounce: ReturnType<typeof setTimeout>;
+
+function debouncedReload() {
+    clearTimeout(echoDebounce);
+    echoDebounce = setTimeout(reloadData, 300);
+}
+
+onMounted(() => {
+    window.Echo.private('pendaftaran-anggota')
+        .listen('.created', debouncedReload)
+        .listen('.updated', debouncedReload)
+        .listen('.deleted', debouncedReload);
+});
+
+onUnmounted(() => {
+    window.Echo.leave('pendaftaran-anggota');
+    clearTimeout(echoDebounce);
+});
 </script>
 
 <template>

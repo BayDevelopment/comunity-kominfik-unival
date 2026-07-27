@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Footer from '@/components/Footer.vue';
 import Navbar from '@/components/Navbar.vue';
+import PwaInstallAlert from '@/components/PwaInstallAlert.vue'
 </script>
 
 <template>
@@ -9,6 +10,7 @@ import Navbar from '@/components/Navbar.vue';
 
         <main>
             <slot />
+            <PwaInstallAlert />
         </main>
 
         <Footer />

@@ -12,7 +12,6 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 
-registerSW({ immediate: true });
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -61,10 +60,15 @@ createInertiaApp({
             .use(plugin)
             .mount(el);
 
-        // Toaster independen, mount sekali untuk semua halaman
         const toasterEl = document.createElement('div');
         document.body.appendChild(toasterEl);
         createApp(GlobalToaster).mount(toasterEl);
+
+        if (typeof window !== 'undefined') {
+            registerSW({
+                immediate: true,
+            });
+        }
     },
 });
 

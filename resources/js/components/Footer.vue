@@ -33,7 +33,7 @@ const programLinks = [
                 <!-- Brand -->
                 <div class="lg:col-span-2">
                     <a href="#beranda" class="group inline-flex items-center gap-3">
-                        <img :src="logoSrc" alt="Logo KOMINFIK" class="h-12 w-12" />
+                        <img :src="logoSrc" alt="Logo KOMINFIK" class="h-12 w-12 rounded-lg" />
 
                         <div>
                             <h2 class="text-xl font-black tracking-tight text-white">

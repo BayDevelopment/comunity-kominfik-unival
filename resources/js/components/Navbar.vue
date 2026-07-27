@@ -46,7 +46,7 @@ function goToSection(id: string) {
         <nav class="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 lg:px-6">
             <!-- Brand -->
             <a href="#" class="group flex items-center gap-3" @click.prevent="goToSection('beranda')">
-                <img :src="logoSrc" alt="Logo KOMINFIK" class="h-11 w-11" />
+                <img :src="logoSrc" alt="Logo KOMINFIK" class="h-11 w-11 rounded-lg" />
 
                 <div class="leading-tight">
                     <h1 class="text-lg font-black tracking-tight text-slate-900">

@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Anggota;
+use App\Models\Kerjasama;
+use App\Models\Layanan;
 use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -47,11 +50,22 @@ class ProjectController extends Controller
                 'gambar_url' => $project->gambar
                     ? asset('storage/' . $project->gambar)
                     : null,
-                'gambar' => $project->gambar, // Tetap sertakan path asli untuk keperluan edit
+                'gambar' => $project->gambar,
             ]);
+
+        // Hitung total dan rata-rata progress dari database
+        $totalProject = Project::count();
+        $avgProgress = $totalProject > 0 ? (int) Project::avg('progress') : 0;
 
         return Inertia::render('project/index', [
             'projects' => $projects,
+            'stats' => [
+                'project'      => $totalProject,
+                'avg_progress' => $avgProgress,
+                'anggota'      => Anggota::where('status', 'aktif')->count(), // Dinamis dari DB
+                'layanan'      => Layanan::where('status', 'aktif')->count(), // Dinamis dari DB
+                'mitra'        => Kerjasama::count(), // Sesuaikan jika ada model Mitra
+            ],
             'filters' => $request->only(['search', 'status', 'progress_min', 'progress_max']),
         ]);
     }

@@ -88,11 +88,11 @@ function submit() {
 <template>
     <Head title="Terbitkan Sertifikat" />
 
-    <div class="mx-auto max-w-3xl space-y-6 p-6">
+    <div class="mx-auto max-w-3xl space-y-6 p-4 sm:p-6">
         <!-- Back -->
         <Link
             href="/certificate"
-            class="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 transition hover:text-orange-700"
+            class="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 transition hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
         >
             <ArrowLeft class="h-4 w-4" />
             Kembali ke daftar sertifikat
@@ -101,18 +101,18 @@ function submit() {
         <!-- Form Card -->
         <form
             @submit.prevent="submit"
-            class="rounded-xl border bg-background p-6 shadow-sm md:p-8"
+            class="rounded-xl border bg-background p-6 shadow-sm dark:border-slate-800 md:p-8"
         >
             <!-- Header -->
-            <div class="flex items-center gap-4 border-b pb-6">
+            <div class="flex items-center gap-4 border-b pb-6 dark:border-slate-800">
                 <div
-                    class="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600"
+                    class="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400"
                 >
                     <Award class="h-6 w-6" stroke-width="2.2" />
                 </div>
 
                 <div>
-                    <h1 class="text-xl font-bold">
+                    <h1 class="text-xl font-bold text-foreground">
                         Terbitkan Sertifikat Baru
                     </h1>
                     <p class="text-sm text-muted-foreground">
@@ -134,7 +134,7 @@ function submit() {
                         v-model="form.certificate_template_id"
                         required
                         :disabled="templates.length === 0"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-60"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-60 dark:border-slate-700 dark:focus:border-orange-400"
                     >
                         <option value="" disabled>Pilih template</option>
                         <option
@@ -170,7 +170,7 @@ function submit() {
                     <select
                         v-model="form.certificate_program_id"
                         :disabled="programs.length === 0"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-60"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-60 dark:border-slate-700 dark:focus:border-orange-400"
                     >
                         <option value="">Tanpa program spesifik</option>
                         <option
@@ -209,7 +209,7 @@ function submit() {
                         type="text"
                         required
                         placeholder="Nama lengkap peserta"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -230,7 +230,7 @@ function submit() {
                         v-model="form.recipient_email"
                         type="email"
                         placeholder="Dipakai peserta saat cek sertifikat"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -251,7 +251,7 @@ function submit() {
                         v-model="form.event_name"
                         type="text"
                         placeholder="Contoh: Coding Camp 2026 Batch 1"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -272,7 +272,7 @@ function submit() {
                         v-model="form.course_name"
                         type="text"
                         placeholder="Contoh: Dasar Pemrograman Web"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -293,7 +293,7 @@ function submit() {
                         v-model="form.description"
                         rows="4"
                         placeholder="Contoh: telah menyelesaikan pelatihan selama 40 jam dengan predikat Baik"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     ></textarea>
 
                     <p
@@ -313,7 +313,7 @@ function submit() {
                     <input
                         v-model="form.issued_at"
                         type="date"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -334,7 +334,7 @@ function submit() {
                     <input
                         v-model="form.expired_at"
                         type="date"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -355,7 +355,7 @@ function submit() {
                         v-model="form.signed_by"
                         type="text"
                         placeholder="Contoh: Ketua Panitia"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -376,7 +376,7 @@ function submit() {
                     <select
                         v-model="form.status"
                         required
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     >
                         <option value="draft">
                             Draf — belum bisa diunduh publik
@@ -405,7 +405,7 @@ function submit() {
                         v-model="form.signatory_name"
                         type="text"
                         placeholder="Contoh: Hery Firmansyah"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p class="mt-1.5 text-xs text-muted-foreground">
@@ -430,7 +430,7 @@ function submit() {
                     <div v-if="!signaturePreview">
                         <label
                             for="signature_image"
-                            class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-4 text-sm font-medium text-muted-foreground transition hover:border-orange-500 hover:text-orange-600"
+                            class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-input px-4 py-4 text-sm font-medium text-muted-foreground transition hover:border-orange-500 hover:text-orange-600 dark:border-slate-700 dark:hover:border-orange-400 dark:hover:text-orange-400"
                         >
                             <Upload class="h-4 w-4" />
                             Klik untuk upload gambar tanda tangan
@@ -446,7 +446,7 @@ function submit() {
 
                     <div
                         v-else
-                        class="flex items-center gap-3 rounded-lg border bg-muted/30 p-3"
+                        class="flex items-center gap-3 rounded-lg border bg-muted/30 p-3 dark:border-slate-700"
                     >
                         <img
                             :src="signaturePreview"
@@ -459,7 +459,7 @@ function submit() {
                         <button
                             type="button"
                             @click="removeSignature"
-                            class="rounded-md p-1.5 text-rose-500 transition hover:bg-rose-50"
+                            class="rounded-md p-1.5 text-rose-500 transition hover:bg-rose-50 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
                         >
                             <X class="h-4 w-4" />
                         </button>
@@ -478,7 +478,7 @@ function submit() {
             <button
                 type="submit"
                 :disabled="form.processing || templates.length === 0"
-                class="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+                class="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-orange-500 dark:hover:bg-orange-600"
             >
                 <Loader2
                     v-if="form.processing"

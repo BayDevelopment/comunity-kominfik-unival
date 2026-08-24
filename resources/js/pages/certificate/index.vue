@@ -131,10 +131,10 @@ function statusStyle(status: CertificateRow['status']): string {
     return (
         {
             published:
-                'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400',
-            draft: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400',
+                'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-900/40',
+            draft: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700',
             revoked:
-                'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400',
+                'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-900/40',
         }[status] ?? ''
     );
 }
@@ -209,7 +209,7 @@ function deleteCertificate() {
             class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
         >
             <div>
-                <h1 class="text-2xl font-bold">Sertifikat</h1>
+                <h1 class="text-2xl font-bold text-foreground">Sertifikat</h1>
                 <p class="text-sm text-muted-foreground">
                     Kelola data dan penerbitan sertifikat peserta.
                 </p>
@@ -217,7 +217,7 @@ function deleteCertificate() {
 
             <Link
                 href="/certificate/create"
-                class="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600"
             >
                 <Plus class="h-4 w-4" />
                 Terbitkan Sertifikat
@@ -226,50 +226,50 @@ function deleteCertificate() {
 
         <!-- Stats Card -->
         <div class="grid gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-4">
-            <div class="rounded-xl border bg-background p-6 shadow-sm">
+            <div class="rounded-xl border bg-background p-6 shadow-sm dark:border-slate-800">
                 <div class="flex items-center justify-between">
                     <span class="text-sm font-medium text-muted-foreground">
                         Total Sertifikat
                     </span>
-                    <Award class="h-6 w-6 text-orange-500" />
+                    <Award class="h-6 w-6 text-orange-500 dark:text-orange-400" />
                 </div>
-                <h2 class="mt-4 text-4xl font-bold">
+                <h2 class="mt-4 text-4xl font-bold text-foreground">
                     {{ stats.total }}
                 </h2>
             </div>
 
-            <div class="rounded-xl border bg-background p-6 shadow-sm">
+            <div class="rounded-xl border bg-background p-6 shadow-sm dark:border-slate-800">
                 <div class="flex items-center justify-between">
                     <span class="text-sm font-medium text-muted-foreground">
                         Terbit
                     </span>
-                    <FileCheck2 class="h-6 w-6 text-emerald-500" />
+                    <FileCheck2 class="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
                 </div>
-                <h2 class="mt-4 text-4xl font-bold text-emerald-600">
+                <h2 class="mt-4 text-4xl font-bold text-emerald-600 dark:text-emerald-400">
                     {{ stats.published }}
                 </h2>
             </div>
 
-            <div class="rounded-xl border bg-background p-6 shadow-sm">
+            <div class="rounded-xl border bg-background p-6 shadow-sm dark:border-slate-800">
                 <div class="flex items-center justify-between">
                     <span class="text-sm font-medium text-muted-foreground">
                         Draf
                     </span>
-                    <FileClock class="h-6 w-6 text-amber-500" />
+                    <FileClock class="h-6 w-6 text-amber-500 dark:text-amber-400" />
                 </div>
-                <h2 class="mt-4 text-4xl font-bold text-amber-600">
+                <h2 class="mt-4 text-4xl font-bold text-amber-600 dark:text-amber-400">
                     {{ stats.draft }}
                 </h2>
             </div>
 
-            <div class="rounded-xl border bg-background p-6 shadow-sm">
+            <div class="rounded-xl border bg-background p-6 shadow-sm dark:border-slate-800">
                 <div class="flex items-center justify-between">
                     <span class="text-sm font-medium text-muted-foreground">
                         Dicabut
                     </span>
-                    <FileX2 class="h-6 w-6 text-rose-500" />
+                    <FileX2 class="h-6 w-6 text-rose-500 dark:text-rose-400" />
                 </div>
-                <h2 class="mt-4 text-4xl font-bold text-rose-600">
+                <h2 class="mt-4 text-4xl font-bold text-rose-600 dark:text-rose-400">
                     {{ stats.revoked }}
                 </h2>
             </div>
@@ -277,7 +277,7 @@ function deleteCertificate() {
 
         <!-- Filters -->
         <div
-            class="flex flex-col gap-3 rounded-xl border bg-background p-4 shadow-sm lg:flex-row lg:items-center"
+            class="flex flex-col gap-3 rounded-xl border bg-background p-4 shadow-sm dark:border-slate-800 lg:flex-row lg:items-center"
         >
             <div class="relative flex-1">
                 <Search
@@ -287,7 +287,7 @@ function deleteCertificate() {
                     v-model="filters.search"
                     type="text"
                     placeholder="Cari nama, email, atau nomor sertifikat"
-                    class="w-full rounded-lg border bg-background py-2 pr-4 pl-10 text-sm transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    class="w-full rounded-lg border bg-background py-2 pr-4 pl-10 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                 />
             </div>
 
@@ -296,7 +296,7 @@ function deleteCertificate() {
             >
                 <select
                     v-model="filters.program_id"
-                    class="w-full rounded-lg border bg-background px-4 py-2 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 lg:w-48"
+                    class="w-full rounded-lg border bg-background px-4 py-2 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400 lg:w-48"
                 >
                     <option value="">Semua Program</option>
                     <option
@@ -310,7 +310,7 @@ function deleteCertificate() {
 
                 <select
                     v-model="filters.status"
-                    class="w-full rounded-lg border bg-background px-4 py-2 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 lg:w-40"
+                    class="w-full rounded-lg border bg-background px-4 py-2 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400 lg:w-40"
                 >
                     <option value="">Semua Status</option>
                     <option value="published">Terbit</option>
@@ -321,10 +321,10 @@ function deleteCertificate() {
         </div>
 
         <!-- Table Container -->
-        <div class="overflow-hidden rounded-xl border bg-background shadow-sm">
+        <div class="overflow-hidden rounded-xl border bg-background shadow-sm dark:border-slate-800">
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[900px] text-left text-sm">
-                    <thead class="border-b bg-muted/50 text-muted-foreground">
+                    <thead class="border-b bg-muted/50 text-muted-foreground dark:border-slate-800">
                         <tr>
                             <th class="px-6 py-4 font-semibold">
                                 No. Sertifikat
@@ -340,7 +340,7 @@ function deleteCertificate() {
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y">
+                    <tbody class="divide-y dark:divide-slate-800">
                         <tr
                             v-for="item in certificates.data"
                             :key="item.id"
@@ -408,7 +408,7 @@ function deleteCertificate() {
                                         v-if="item.status !== 'revoked'"
                                         type="button"
                                         @click="openRevokeModal(item)"
-                                        class="rounded-lg p-2 text-muted-foreground transition hover:bg-amber-50 hover:text-amber-600"
+                                        class="rounded-lg p-2 text-muted-foreground transition hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-950/40 dark:hover:text-amber-400"
                                         title="Cabut sertifikat"
                                     >
                                         <Ban class="h-4 w-4" />
@@ -417,7 +417,7 @@ function deleteCertificate() {
                                     <button
                                         type="button"
                                         @click="confirmDelete(item.id)"
-                                        class="rounded-lg p-2 text-muted-foreground transition hover:bg-rose-50 hover:text-rose-600"
+                                        class="rounded-lg p-2 text-muted-foreground transition hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
                                         title="Hapus sertifikat"
                                     >
                                         <Trash2 class="h-4 w-4" />
@@ -446,7 +446,7 @@ function deleteCertificate() {
             <!-- Pagination -->
             <div
                 v-if="certificates.total > 0"
-                class="flex flex-col gap-4 border-t px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
+                class="flex flex-col gap-4 border-t px-6 py-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between"
             >
                 <p class="text-xs text-muted-foreground">
                     Menampilkan {{ certificates.from }}–{{
@@ -465,7 +465,7 @@ function deleteCertificate() {
                         :class="[
                             'flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-xs font-semibold transition',
                             link.active
-                                ? 'bg-orange-600 text-white'
+                                ? 'bg-orange-600 text-white dark:bg-orange-500'
                                 : 'text-muted-foreground hover:bg-muted',
                             !link.url && 'pointer-events-none opacity-30',
                         ]"
@@ -490,12 +490,12 @@ function deleteCertificate() {
                 class="w-full max-w-md rounded-[2rem] border border-slate-100 bg-white p-6 text-center shadow-2xl dark:border-slate-800 dark:bg-slate-900"
             >
                 <div
-                    class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-500/10"
+                    class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
                 >
                     <AlertTriangle class="h-7 w-7" />
                 </div>
                 <h3
-                    class="text-lg font-black text-slate-900 dark:text-slate-100"
+                    class="text-lg font-black text-slate-900 dark:text-white"
                 >
                     Cabut Sertifikat Ini?
                 </h3>
@@ -513,7 +513,7 @@ function deleteCertificate() {
                         v-model="revokeReason"
                         rows="3"
                         placeholder="Contoh: Kesalahan penulisan nama..."
-                        class="w-full rounded-2xl border border-slate-200 bg-background p-3 text-sm text-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none dark:border-slate-700 dark:text-slate-100"
+                        class="w-full rounded-2xl border border-slate-200 bg-background p-3 text-sm text-slate-800 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none dark:border-slate-700 dark:text-slate-100 dark:focus:border-orange-400"
                     ></textarea>
                 </div>
 
@@ -533,7 +533,7 @@ function deleteCertificate() {
                         @click="submitRevoke"
                         type="button"
                         :disabled="!revokeReason.trim()"
-                        class="flex-1 rounded-xl bg-amber-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-amber-600/20 transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="flex-1 rounded-xl bg-amber-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-amber-600/20 transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-amber-500 dark:hover:bg-amber-600"
                     >
                         Ya, Cabut
                     </button>
@@ -550,12 +550,12 @@ function deleteCertificate() {
                 class="w-full max-w-md rounded-[2rem] border border-slate-100 bg-white p-6 text-center shadow-2xl dark:border-slate-800 dark:bg-slate-900"
             >
                 <div
-                    class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-500/10"
+                    class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
                 >
                     <AlertTriangle class="h-7 w-7" />
                 </div>
                 <h3
-                    class="text-lg font-black text-slate-900 dark:text-slate-100"
+                    class="text-lg font-black text-slate-900 dark:text-white"
                 >
                     Hapus Sertifikat Ini?
                 </h3>
@@ -574,7 +574,7 @@ function deleteCertificate() {
                     <button
                         @click="deleteCertificate"
                         type="button"
-                        class="flex-1 rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-rose-600/20 transition hover:bg-rose-700"
+                        class="flex-1 rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-rose-600/20 transition hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600"
                     >
                         Ya, Hapus
                     </button>

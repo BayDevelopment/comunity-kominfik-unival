@@ -72,13 +72,13 @@ function deleteTemplate() {
             <div>
                 <Link
                     href="/certificate"
-                    class="mb-3 inline-flex items-center gap-2 text-sm font-bold text-orange-700 hover:text-orange-800"
+                    class="mb-3 inline-flex items-center gap-2 text-sm font-bold text-orange-600 hover:text-orange-500 dark:text-orange-400 dark:hover:text-orange-300"
                 >
                     <ArrowLeft class="h-4 w-4" />
                     Kembali ke daftar sertifikat
                 </Link>
-                <h1 class="text-2xl font-black text-slate-950">Template Sertifikat</h1>
-                <p class="text-sm text-slate-500">
+                <h1 class="text-2xl font-black text-slate-950 dark:text-white">Template Sertifikat</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400">
                     Kelola desain tata letak dan latar belakang sertifikat Anda.
                 </p>
             </div>
@@ -96,18 +96,18 @@ function deleteTemplate() {
         <!-- Empty State -->
         <div
             v-if="templates.length === 0"
-            class="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-orange-200 bg-white p-12 text-center shadow-sm"
+            class="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-orange-200 bg-white p-12 text-center shadow-sm dark:border-orange-900/50 dark:bg-slate-900"
         >
-            <div class="flex h-16 w-16 items-center justify-center rounded-3xl bg-orange-50 text-orange-600 mb-4">
+            <div class="flex h-16 w-16 items-center justify-center rounded-3xl bg-orange-50 text-orange-600 mb-4 dark:bg-orange-950/50 dark:text-orange-400">
                 <LayoutTemplate class="h-8 w-8" />
             </div>
-            <h3 class="text-base font-bold text-slate-900">Belum ada template sertifikat</h3>
-            <p class="mt-1 max-w-sm text-sm text-slate-500">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Belum ada template sertifikat</h3>
+            <p class="mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400">
                 Silakan buat template baru terlebih dahulu agar Anda dapat mulai menerbitkan sertifikat.
             </p>
             <Link
                 href="/certificate-template/create"
-                class="mt-6 inline-flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-orange-700"
+                class="mt-6 inline-flex items-center gap-2 rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600"
             >
                 <Plus class="h-4 w-4" />
                 Buat Template
@@ -119,19 +119,19 @@ function deleteTemplate() {
             <div
                 v-for="template in templates"
                 :key="template.id"
-                class="group flex flex-col justify-between overflow-hidden rounded-[2rem] border border-orange-100 bg-white shadow-sm shadow-orange-100/40 transition hover:shadow-md"
+                class="group flex flex-col justify-between overflow-hidden rounded-[2rem] border border-orange-100 bg-white shadow-sm shadow-orange-100/40 transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
             >
                 <!-- Preview Image / Background Banner -->
-                <div class="relative h-48 w-full bg-slate-100 overflow-hidden border-b border-orange-50">
+                <div class="relative h-48 w-full bg-slate-100 overflow-hidden border-b border-orange-50 dark:bg-slate-800 dark:border-slate-800">
                     <img
                         v-if="template.background_url"
                         :src="template.background_url"
                         :alt="template.name"
                         class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
-                    <div v-else class="flex h-full w-full flex-col items-center justify-center text-slate-400 gap-1 bg-slate-50">
-                        <Award class="h-8 w-8 opacity-40 text-orange-500" />
-                        <span class="text-[11px] font-medium text-slate-400">Tidak ada background</span>
+                    <div v-else class="flex h-full w-full flex-col items-center justify-center text-slate-400 gap-1 bg-slate-50 dark:bg-slate-800/50">
+                        <Award class="h-8 w-8 opacity-40 text-orange-500 dark:text-orange-400" />
+                        <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500">Tidak ada background</span>
                     </div>
 
                     <!-- Status Badge -->
@@ -144,7 +144,7 @@ function deleteTemplate() {
                         </span>
                         <span
                             v-else
-                            class="inline-flex items-center gap-1.5 rounded-full bg-slate-700/90 px-3 py-1 text-xs font-bold text-white shadow-sm backdrop-blur-md"
+                            class="inline-flex items-center gap-1.5 rounded-full bg-slate-700/90 px-3 py-1 text-xs font-bold text-white shadow-sm backdrop-blur-md dark:bg-slate-800/90"
                         >
                             <XCircle class="h-3.5 w-3.5" /> Nonaktif
                         </span>
@@ -164,26 +164,26 @@ function deleteTemplate() {
                 <!-- Body Content -->
                 <div class="p-6 flex-1 flex flex-col justify-between">
                     <div>
-                        <h2 class="text-base font-black text-slate-900 group-hover:text-orange-600 transition">
+                        <h2 class="text-base font-black text-slate-900 group-hover:text-orange-600 transition dark:text-white dark:group-hover:text-orange-400">
                             {{ template.name }}
                         </h2>
-                        <p class="mt-1 text-xs text-slate-400 font-mono">
+                        <p class="mt-1 text-xs text-slate-400 font-mono dark:text-slate-500">
                             Slug: {{ template.slug }}
                         </p>
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="mt-6 flex items-center gap-2 pt-4 border-t border-slate-100">
+                    <div class="mt-6 flex items-center gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
                         <Link
                             :href="`/certificate-template/${template.id}/edit`"
-                            class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:border-slate-300"
+                            class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:border-slate-600"
                         >
                             Edit Template
                         </Link>
                         <button
                             @click="confirmDelete(template.id)"
                             type="button"
-                            class="inline-flex items-center justify-center rounded-xl border border-rose-100 bg-rose-50/50 p-2.5 text-rose-600 transition hover:bg-rose-100 hover:text-rose-700"
+                            class="inline-flex items-center justify-center rounded-xl border border-rose-100 bg-rose-50/50 p-2.5 text-rose-600 transition hover:bg-rose-100 hover:text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-900/50 dark:hover:text-rose-300"
                             title="Hapus Template"
                         >
                             <Trash2 class="h-4 w-4" />
@@ -195,12 +195,12 @@ function deleteTemplate() {
 
         <!-- Custom Delete Confirmation Modal -->
         <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            <div class="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl border border-slate-100 text-center">
-                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4">
+            <div class="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl border border-slate-100 text-center dark:bg-slate-900 dark:border-slate-800">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 mb-4 dark:bg-rose-950/50 dark:text-rose-400">
                     <AlertTriangle class="h-7 w-7" />
                 </div>
-                <h3 class="text-lg font-black text-slate-900">Hapus Template Ini?</h3>
-                <p class="mt-2 text-sm text-slate-500">
+                <h3 class="text-lg font-black text-slate-900 dark:text-white">Hapus Template Ini?</h3>
+                <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
                     Tindakan ini tidak dapat dibatalkan. Template yang dihapus akan hilang secara permanen dari sistem.
                 </p>
 
@@ -208,14 +208,14 @@ function deleteTemplate() {
                     <button
                         @click="cancelDelete"
                         type="button"
-                        class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                        class="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     >
                         Batal
                     </button>
                     <button
                         @click="deleteTemplate"
                         type="button"
-                        class="flex-1 rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-rose-600/20 transition hover:bg-rose-700"
+                        class="flex-1 rounded-xl bg-rose-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-rose-600/20 transition hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600"
                     >
                         Ya, Hapus
                     </button>

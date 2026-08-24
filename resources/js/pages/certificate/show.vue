@@ -12,13 +12,13 @@ import {
     Hash,
     CalendarDays,
     CalendarX,
-    BadgeCheck,
     FileText,
     PenLine,
     Eye,
     CheckCircle,
     X,
     AlertTriangle,
+    BookOpen,
 } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 
@@ -35,17 +35,19 @@ interface CertificateDetail {
     event_name: string | null;
     course_name: string | null;
     description: string | null;
+    signatory_name: string | null;
+    signatory_role: string | null;
+    signatory_signature_path: string | null;
+    signatory_signature_url: string | null;
     issued_at: string;
     expired_at: string | null;
     status: 'draft' | 'published' | 'revoked';
-    signed_by: string | null;
     verification_code: string;
     download_count: number;
     last_downloaded_at: string | null;
     revoke_reason: string | null;
     revoked_at: string | null;
     template: { id: number; name: string } | null;
-    program: { id: number; name: string } | null;
     revoked_by: { id: number; name: string } | null;
 }
 
@@ -237,6 +239,7 @@ function submitDestroy() {
             </div>
 
             <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+                <!-- Nama Penerima -->
                 <div class="flex items-start gap-3">
                     <UserRound class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                     <div>
@@ -251,6 +254,7 @@ function submitDestroy() {
                     </div>
                 </div>
 
+                <!-- Email -->
                 <div class="flex items-start gap-3">
                     <Mail class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                     <div>
@@ -265,6 +269,7 @@ function submitDestroy() {
                     </div>
                 </div>
 
+                <!-- Nomor Sertifikat -->
                 <div class="flex items-start gap-3">
                     <Hash class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                     <div>
@@ -279,22 +284,7 @@ function submitDestroy() {
                     </div>
                 </div>
 
-                <div class="flex items-start gap-3">
-                    <BadgeCheck
-                        class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
-                    />
-                    <div>
-                        <p
-                            class="text-xs font-bold tracking-wide text-muted-foreground uppercase"
-                        >
-                            Program
-                        </p>
-                        <p class="text-sm font-bold text-foreground">
-                            {{ certificate.program?.name ?? '—' }}
-                        </p>
-                    </div>
-                </div>
-
+                <!-- Template -->
                 <div class="flex items-start gap-3">
                     <FileText class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                     <div>
@@ -309,20 +299,72 @@ function submitDestroy() {
                     </div>
                 </div>
 
+                <!-- Nama Event -->
+                <div class="flex items-start gap-3">
+                    <Award class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div>
+                        <p
+                            class="text-xs font-bold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Nama Event
+                        </p>
+                        <p class="text-sm font-bold text-foreground">
+                            {{ certificate.event_name ?? '—' }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Kursus / Materi -->
+                <div class="flex items-start gap-3">
+                    <BookOpen class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div>
+                        <p
+                            class="text-xs font-bold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Kursus / Materi
+                        </p>
+                        <p class="text-sm font-bold text-foreground">
+                            {{ certificate.course_name ?? '—' }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Penanda Tangan & Jabatan -->
                 <div class="flex items-start gap-3">
                     <PenLine class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                     <div>
                         <p
                             class="text-xs font-bold tracking-wide text-muted-foreground uppercase"
                         >
-                            Ditandatangani oleh
+                            Penanda Tangan
                         </p>
                         <p class="text-sm font-bold text-foreground">
-                            {{ certificate.signed_by ?? '—' }}
+                            {{ certificate.signatory_name ?? '—' }}
+                        </p>
+                        <p v-if="certificate.signatory_role" class="text-xs text-muted-foreground">
+                            {{ certificate.signatory_role }}
                         </p>
                     </div>
                 </div>
 
+                <!-- Tanda Tangan Gambar -->
+                <div v-if="certificate.signatory_signature_url" class="flex items-start gap-3">
+                    <PenLine class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div>
+                        <p
+                            class="text-xs font-bold tracking-wide text-muted-foreground uppercase"
+                        >
+                            Tanda Tangan
+                        </p>
+                        <img
+                            :src="certificate.signatory_signature_url"
+                            alt="Gambar Tanda Tangan"
+                            class="mt-1 h-12 w-auto rounded border bg-white object-contain p-1 dark:border-slate-700"
+                        />
+                    </div>
+                </div>
+
+                <!-- Tanggal Terbit -->
                 <div class="flex items-start gap-3">
                     <CalendarDays
                         class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
@@ -339,6 +381,7 @@ function submitDestroy() {
                     </div>
                 </div>
 
+                <!-- Tanggal Expired -->
                 <div class="flex items-start gap-3">
                     <CalendarX class="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                     <div>
@@ -353,6 +396,7 @@ function submitDestroy() {
                     </div>
                 </div>
 
+                <!-- Keterangan -->
                 <div v-if="certificate.description" class="md:col-span-2">
                     <p
                         class="text-xs font-bold tracking-wide text-muted-foreground uppercase"

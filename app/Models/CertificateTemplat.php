@@ -6,13 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
 class CertificateTemplat extends Model
 {
-    protected $table = 'certificate_templates';
-
     use HasFactory, SoftDeletes;
+
+    protected $table = 'certificate_templates';
 
     protected $fillable = [
         'name',
@@ -21,13 +22,11 @@ class CertificateTemplat extends Model
         'orientation',
         'width',
         'height',
-        // 'elements',
         'is_active',
         'created_by',
     ];
 
     protected $casts = [
-        // 'elements'  => 'array',
         'is_active' => 'boolean',
         'width'     => 'integer',
         'height'    => 'integer',
@@ -39,30 +38,31 @@ class CertificateTemplat extends Model
 
         static::creating(function (CertificateTemplat $template) {
             if (empty($template->slug)) {
-                $template->slug = Str::slug($template->name) . '-' . Str::random(5);
+                $template->slug = Str::slug($template->name) . '-' . Str::lower(Str::random(5));
             }
         });
     }
 
-    public function creator()
+    /* ================= RELATIONS ================= */
+
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
     public function certificates(): HasMany
     {
-        return $this->hasMany(Certificate::class);
+        return $this->hasMany(Certificate::class, 'certificate_template_id');
     }
 
-    public function signatures(): HasMany
-    {
-        return $this->hasMany(CertificateSignature::class)->orderBy('order');
-    }
+    /* ================= SCOPES ================= */
 
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
+
+    /* ================= ACCESSORS ================= */
 
     public function getBackgroundUrlAttribute(): ?string
     {

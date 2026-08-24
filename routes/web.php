@@ -49,8 +49,7 @@ Route::post('/sertifikat/cari', [CertificateVerificationController::class, 'sear
 
 Route::get('/sertifikat/{verificationCode}/download', [CertificateVerificationController::class, 'download'])
     ->name('sertifikat.download');
-
-
+    
 // ---------- ROUTE PROTECTED (MEMBER / ADMIN) ----------
 Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])

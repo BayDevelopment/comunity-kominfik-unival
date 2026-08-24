@@ -4,12 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Certificate;
-use App\Models\CertificateProgram;
-use App\Models\CertificateTemplat; // Sesuaikan dengan nama model Anda
+use App\Models\CertificateTemplat;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,19 +21,18 @@ class CertificateController extends Controller
     public function index(Request $request): Response
     {
         $certificates = Certificate::query()
-            ->with('program')
+            ->with(['template'])
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('recipient_name', 'like', "%{$search}%")
                         ->orWhere('certificate_number', 'like', "%{$search}%")
-                        ->orWhere('recipient_email', 'like', "%{$search}%");
+                        ->orWhere('recipient_email', 'like', "%{$search}%")
+                        ->orWhere('event_name', 'like', "%{$search}%")
+                        ->orWhere('course_name', 'like', "%{$search}%");
                 });
             })
             ->when($request->status, function ($query, $status) {
                 $query->where('status', $status);
-            })
-            ->when($request->program_id, function ($query, $programId) {
-                $query->where('certificate_program_id', $programId);
             })
             ->latest()
             ->paginate(15)
@@ -41,20 +40,15 @@ class CertificateController extends Controller
 
         return Inertia::render('certificate/index', [
             'certificates' => $certificates,
-            'programs' => CertificateProgram::query()
-                ->select('id', 'name')
-                ->orderBy('name')
-                ->get(),
             'stats' => [
-                'total' => Certificate::count(),
+                'total'     => Certificate::count(),
                 'published' => Certificate::where('status', 'published')->count(),
-                'draft' => Certificate::where('status', 'draft')->count(),
-                'revoked' => Certificate::where('status', 'revoked')->count(),
+                'draft'     => Certificate::where('status', 'draft')->count(),
+                'revoked'   => Certificate::where('status', 'revoked')->count(),
             ],
             'filters' => [
                 'search' => $request->search ?? '',
                 'status' => $request->status ?? '',
-                'program_id' => $request->program_id ?? '',
             ],
         ]);
     }
@@ -64,19 +58,13 @@ class CertificateController extends Controller
      */
     public function create(): Response
     {
-        $templates = CertificateTemplat::query()
-            ->select('id', 'name')
-            ->orderBy('name')
-            ->get();
-
-        $programs = CertificateProgram::query()
+        $templates = CertificateTemplat::active()
             ->select('id', 'name')
             ->orderBy('name')
             ->get();
 
         return Inertia::render('certificate/create', [
             'templates' => $templates,
-            'programs' => $programs,
         ]);
     }
 
@@ -87,16 +75,15 @@ class CertificateController extends Controller
     {
         $validated = $request->validate([
             'certificate_template_id' => ['required', 'exists:certificate_templates,id'],
-            'certificate_program_id'  => ['nullable', 'exists:certificate_programs,id'],
             'recipient_name'          => ['required', 'string', 'max:255'],
             'recipient_email'         => ['nullable', 'email', 'max:255'],
             'event_name'              => ['nullable', 'string', 'max:255'],
             'course_name'             => ['nullable', 'string', 'max:255'],
             'description'             => ['nullable', 'string'],
-            'issued_at'               => ['nullable', 'date'],
-            'expired_at'              => ['nullable', 'date', 'after_or_equal:issued_at'],
-            'signed_by'               => ['nullable', 'string', 'max:255'],
             'signatory_name'          => ['nullable', 'string', 'max:255'],
+            'signatory_role'          => ['nullable', 'string', 'max:255'],
+            'issued_at'               => ['required', 'date'],
+            'expired_at'              => ['nullable', 'date', 'after_or_equal:issued_at'],
             'signature_image'         => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
             'status'                  => ['required', 'in:draft,published'],
         ]);
@@ -104,24 +91,32 @@ class CertificateController extends Controller
         if ($request->hasFile('signature_image')) {
             $validated['signatory_signature_path'] = $request->file('signature_image')->store('signatures', 'public');
         }
+        unset($validated['signature_image']);
+
+        $validated['uuid']               = (string) Str::uuid();
+        $validated['certificate_number'] = 'CERT-' . strtoupper(Str::random(8));
+        $validated['verification_code']  = Str::random(32);
+        $validated['user_id']            = Auth::id();
 
         $certificate = Certificate::create($validated);
 
         return redirect()
-            ->route('certificate.show', $certificate)
+            ->route('certificate.show', $certificate->id)
             ->with('flash', [
                 'toast' => [
-                    'type' => 'success',
+                    'type'    => 'success',
                     'message' => 'Sertifikat berhasil diterbitkan.',
                 ],
             ]);
     }
 
+    /**
+     * Detail sertifikat.
+     */
     public function show(Certificate $certificate): Response
     {
         $certificate->load([
             'template',
-            'program',
             'revokedBy',
         ]);
 
@@ -135,17 +130,9 @@ class CertificateController extends Controller
      */
     public function edit(Certificate $certificate): Response
     {
-        $certificate->load([
-            'template',
-            'program',
-        ]);
+        $certificate->load(['template']);
 
-        $templates = CertificateTemplat::query()
-            ->select('id', 'name')
-            ->orderBy('name')
-            ->get();
-
-        $programs = CertificateProgram::query()
+        $templates = CertificateTemplat::active()
             ->select('id', 'name')
             ->orderBy('name')
             ->get();
@@ -153,7 +140,6 @@ class CertificateController extends Controller
         return Inertia::render('certificate/edit', [
             'certificate' => $certificate,
             'templates'   => $templates,
-            'programs'    => $programs,
         ]);
     }
 
@@ -164,16 +150,15 @@ class CertificateController extends Controller
     {
         $validated = $request->validate([
             'certificate_template_id' => ['required', 'exists:certificate_templates,id'],
-            'certificate_program_id'  => ['nullable', 'exists:certificate_programs,id'],
             'recipient_name'          => ['required', 'string', 'max:255'],
             'recipient_email'         => ['nullable', 'email', 'max:255'],
             'event_name'              => ['nullable', 'string', 'max:255'],
             'course_name'             => ['nullable', 'string', 'max:255'],
             'description'             => ['nullable', 'string'],
-            'issued_at'               => ['nullable', 'date'],
-            'expired_at'              => ['nullable', 'date', 'after_or_equal:issued_at'],
-            'signed_by'               => ['nullable', 'string', 'max:255'],
             'signatory_name'          => ['nullable', 'string', 'max:255'],
+            'signatory_role'          => ['nullable', 'string', 'max:255'],
+            'issued_at'               => ['required', 'date'],
+            'expired_at'              => ['nullable', 'date', 'after_or_equal:issued_at'],
             'signature_image'         => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
             'status'                  => ['required', 'in:draft,published,revoked'],
         ]);
@@ -184,20 +169,20 @@ class CertificateController extends Controller
             }
             $validated['signatory_signature_path'] = $request->file('signature_image')->store('signatures', 'public');
         }
+        unset($validated['signature_image']);
 
         $certificate->update($validated);
 
-        // Hapus file cache PDF lama agar ter-generate ulang dengan data terbaru
         if ($certificate->file_path && Storage::disk('public')->exists($certificate->file_path)) {
             Storage::disk('public')->delete($certificate->file_path);
             $certificate->update(['file_path' => null]);
         }
 
         return redirect()
-            ->route('certificate.show', $certificate)
+            ->route('certificate.show', $certificate->id)
             ->with('flash', [
                 'toast' => [
-                    'type' => 'success',
+                    'type'    => 'success',
                     'message' => 'Sertifikat berhasil diperbarui.',
                 ],
             ]);
@@ -222,7 +207,7 @@ class CertificateController extends Controller
             ->route('certificate.index')
             ->with('flash', [
                 'toast' => [
-                    'type' => 'success',
+                    'type'    => 'success',
                     'message' => 'Sertifikat berhasil dihapus.',
                 ],
             ]);
@@ -237,14 +222,16 @@ class CertificateController extends Controller
             'revoke_reason' => ['required', 'string', 'max:500'],
         ]);
 
-        $certificate->revoke(
-            $validated['revoke_reason'],
-            Auth::id()
-        );
+        $certificate->update([
+            'status'        => 'revoked',
+            'revoke_reason' => $validated['revoke_reason'],
+            'revoked_at'    => now(),
+            'revoked_by'    => Auth::id(),
+        ]);
 
         return back()->with('flash', [
             'toast' => [
-                'type' => 'success',
+                'type'    => 'success',
                 'message' => 'Sertifikat berhasil dicabut.',
             ],
         ]);
@@ -255,14 +242,13 @@ class CertificateController extends Controller
      */
     public function download(Certificate $certificate)
     {
-        if (method_exists($certificate, 'recordDownload')) {
-            $certificate->recordDownload();
-        }
+        $certificate->increment('download_count');
+        $certificate->update(['last_downloaded_at' => now()]);
 
-        $certificate->load(['template', 'program']);
+        $certificate->load(['template']);
 
         $template = $certificate->template;
-        $width = $template?->width ?? 842;
+        $width  = $template?->width ?? 842;
         $height = $template?->height ?? 595;
 
         $pdf = Pdf::loadView('certificates.pdf', [
@@ -271,7 +257,7 @@ class CertificateController extends Controller
         ]);
 
         if ($template && $template->width && $template->height) {
-            $pdf->setPaper([0, 0, $width, $height], 'landscape');
+            $pdf->setPaper([0, 0, $width, $height], $template->orientation ?? 'landscape');
         } else {
             $pdf->setPaper('a4', 'landscape');
         }

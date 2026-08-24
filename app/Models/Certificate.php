@@ -4,47 +4,60 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Certificate extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = "certificates";
+
     protected $fillable = [
         'uuid',
         'certificate_template_id',
-        'certificate_program_id',
         'user_id',
         'certificate_number',
         'recipient_name',
         'recipient_email',
         'event_name',
         'course_name',
-        'description',            
+        'description',
+        'signatory_name',
+        'signatory_role',
+        'signatory_signature_path',
         'issued_at',
         'expired_at',
+        'status',
+        'revoke_reason',
+        'revoked_at',
+        'revoked_by',
         'file_path',
         'verification_code',
-        'status',
-        'signed_by',
-        'signatory_name',            // Kolom baru
-        'signatory_signature_path',  // Kolom baru
-        'revoke_reason',          
-        'revoked_at',             
-        'revoked_by',             
         'metadata',
-        'download_count',         
-        'last_downloaded_at',     
+        'download_count',
+        'last_downloaded_at',
     ];
 
     protected $casts = [
         'issued_at'          => 'date',
         'expired_at'         => 'date',
-        'revoked_at'         => 'datetime',      
-        'last_downloaded_at' => 'datetime',      
+        'revoked_at'         => 'datetime',
+        'last_downloaded_at' => 'datetime',
         'metadata'           => 'array',
+        'download_count'     => 'integer',
+    ];
+
+    /**
+     * Otomatis sertakan accessor ini saat dikonversi ke JSON (Inertia Props)
+     */
+    protected $appends = [
+        'signatory_signature_url',
+        'file_url',
+        'verification_url',
     ];
 
     protected static function boot()
@@ -60,7 +73,7 @@ class Certificate extends Model
     }
 
     /**
-     * Contoh: CERT/2026/08/0001
+     * Format Nomor: CERT/2026/08/0001
      */
     public static function generateCertificateNumber(): string
     {
@@ -81,6 +94,8 @@ class Certificate extends Model
         return $prefix . str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
     }
 
+    /* ================= RELATIONS ================= */
+
     public function template(): BelongsTo
     {
         return $this->belongsTo(CertificateTemplat::class, 'certificate_template_id');
@@ -90,6 +105,13 @@ class Certificate extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function revokedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'revoked_by');
+    }
+
+    /* ================= SCOPES ================= */
 
     public function scopePublished($query)
     {
@@ -101,42 +123,39 @@ class Certificate extends Model
         return $query->where('status', 'revoked');
     }
 
+    public function scopeDraft($query)
+    {
+        return $query->where('status', 'draft');
+    }
+
+    /* ================= ACCESSORS ================= */
+
     public function isExpired(): bool
     {
         return $this->expired_at !== null && $this->expired_at->isPast();
     }
 
+    // SESUDAH — arahkan ke halaman publik cek sertifikat yang benar
     public function getVerificationUrlAttribute(): string
     {
-        return route('certificates.verify', $this->verification_code);
+        return route('sertifikat.index') . '?code=' . $this->verification_code;
     }
 
     public function getFileUrlAttribute(): ?string
     {
         return $this->file_path
-            ? asset('storage/' . $this->file_path)
+            ? Storage::url($this->file_path)
             : null;
     }
 
-    /**
-     * Accessor untuk mendapatkan URL lengkap gambar tanda tangan ketua.
-     */
     public function getSignatorySignatureUrlAttribute(): ?string
     {
         return $this->signatory_signature_path
-            ? asset('storage/' . $this->signatory_signature_path)
+            ? Storage::url($this->signatory_signature_path)
             : null;
     }
 
-    public function program(): BelongsTo
-    {
-        return $this->belongsTo(CertificateProgram::class, 'certificate_program_id');
-    }
-
-    public function revokedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'revoked_by');
-    }
+    /* ================= HELPER METHODS ================= */
 
     /**
      * Cabut sertifikat dengan alasan & jejak siapa yang mencabut.
@@ -147,7 +166,7 @@ class Certificate extends Model
             'status'        => 'revoked',
             'revoke_reason' => $reason,
             'revoked_at'    => now(),
-            'revoked_by'    => $revokedByUserId,
+            'revoked_by'    => $revokedByUserId ?? Auth::id(),
         ]);
     }
 
@@ -156,7 +175,10 @@ class Certificate extends Model
      */
     public function recordDownload(): void
     {
+        $this->timestamps = false;
         $this->increment('download_count');
-        $this->update(['last_downloaded_at' => now()]);
+        $this->last_downloaded_at = now();
+        $this->save();
+        $this->timestamps = true;
     }
 }

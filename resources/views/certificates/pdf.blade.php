@@ -6,13 +6,13 @@
     <style>
         @font-face {
             font-family: 'Poppins';
-            src: url('{{ public_path('storage/fonts/Poppins-Regular.ttf') }}');
+            src: url('{{ storage_path('app/public/fonts/Poppins-Regular.ttf') }}');
             font-weight: normal;
         }
 
         @font-face {
             font-family: 'Poppins';
-            src: url('{{ public_path('storage/fonts/Poppins-SemiBold.ttf') }}');
+            src: url('{{ storage_path('app/public/fonts/Poppins-SemiBold.ttf') }}');
             font-weight: 600;
         }
 
@@ -273,7 +273,9 @@
             }
         }
 
-        $programName = $certificate->program?->name ?? ($certificate->event_name ?? $certificate->course_name);
+        // 'program' relation tidak ada di model, dan sekarang program name
+        // disimpan langsung sebagai kolom string event_name / course_name.
+        $programName = $certificate->event_name ?? $certificate->course_name;
 
         $orgName = $certificate->metadata['org_name'] ?? config('app.name', 'Sertifikat Digital');
 
@@ -283,20 +285,30 @@
                 ($programName ?? '') .
                 ($certificate->issued_at ? ' ' . \Carbon\Carbon::parse($certificate->issued_at)->year : '');
 
-        $signName = $certificate->signatory_name ?: $certificate->signed_by;
-
+        // signed_by tidak ada di fillable. Nama penandatangan = signatory_name,
+        // jabatan/role penandatangan = signatory_role.
+        $signRole = $certificate->signatory_role;
+        $signName = $certificate->signatory_name;
+        // Akses langsung ke filesystem (storage_path), tidak lewat symlink
+        // public/storage — supaya tidak bergantung pada `php artisan storage:link`
+        // yang sering belum/gagal dijalankan di hosting.
         $signatureImagePath = $certificate->signatory_signature_path
-            ? public_path('storage/' . $certificate->signatory_signature_path)
+            ? storage_path('app/public/' . $certificate->signatory_signature_path)
             : null;
         $signatureImageExists = $signatureImagePath && file_exists($signatureImagePath);
+
+        $backgroundImagePath =
+            $certificate->template && $certificate->template->background_image
+                ? storage_path('app/public/' . $certificate->template->background_image)
+                : null;
+        $backgroundImageExists = $backgroundImagePath && file_exists($backgroundImagePath);
     @endphp
 
     <div class="cert-page">
         <div class="cert-topbar" style="height:{{ $sc(12) }}px;"></div>
 
-        @if ($certificate->template && $certificate->template->background_image)
-            <img class="cert-watermark" style="height:{{ $sc(230) }}px;"
-                src="{{ public_path('storage/' . $certificate->template->background_image) }}">
+        @if ($backgroundImageExists)
+            <img class="cert-watermark" style="height:{{ $sc(230) }}px;" src="{{ $backgroundImagePath }}">
         @else
             <div class="cert-shape-1"
                 style="top:{{ $sc(-90) }}px; left:{{ $sc(-110) }}px; width:{{ $sc(440) }}px; height:{{ $sc(440) }}px;">
@@ -405,10 +417,10 @@
                 @if ($signName)
                     <div class="sign-name" style="font-size:{{ $sc(13) }}px;">{{ $signName }}</div>
                 @endif
-                @if ($certificate->signed_by)
+                @if ($signRole)
                     <div class="sign-role"
                         style="font-size:{{ $sc(8.5) }}px; letter-spacing:{{ $sc(1) }}px; margin-top:{{ $sc(3) }}px;">
-                        {{ $certificate->signed_by }}
+                        {{ $signRole }}
                     </div>
                 @endif
             </div>

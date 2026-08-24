@@ -27,82 +27,39 @@ class CertificateVerificationController extends Controller
      * Proses pencarian sertifikat lewat form Inertia biasa (useForm().post()).
      * Rate-limited lewat middleware 'throttle:5,1' di route.
      */
-    public function search(Request $request): RedirectResponse
+    public function search(Request $request): Response
     {
         $validated = $request->validate([
             'recipient_email' => ['required', 'email', 'max:255'],
             'recipient_name'  => ['required', 'string', 'max:255'],
         ]);
 
-        // Bersihkan input email dan nama
         $email = trim(strtolower($validated['recipient_email']));
         $name  = trim($validated['recipient_name']);
+        $name  = str_replace(['%', '_'], ['\%', '\_'], $name); // escape LIKE
 
         $certificate = Certificate::query()
-            ->with(['program:id,name', 'template'])
+            ->with(['template'])   // 'program' dihapus, relasinya tidak ada
             ->where('recipient_email', $email)
             ->where('recipient_name', 'like', '%' . $name . '%')
             ->whereIn('status', ['published', 'revoked'])
             ->first();
 
-        if (! $certificate) {
-            return back()
-                ->with('flash', [
-                    'toast' => [
-                        'type' => 'error',
-                        'message' => 'Sertifikat tidak ditemukan. Periksa kembali nama dan email Anda.',
-                    ],
-                ])
-                ->with('certificate_search', [
-                    'found' => false,
-                    'data'  => null,
-                ]);
-        }
-
-        // Jika sertifikat dicabut
-        if ($certificate->status === 'revoked') {
-            return back()
-                ->with('flash', [
-                    'toast' => [
-                        'type' => 'error',
-                        'message' => 'Sertifikat ini telah dicabut (revoked).',
-                    ],
-                ])
-                ->with('certificate_search', [
-                    'found' => true,
-                    'data'  => [
-                        'recipient_name'     => $certificate->recipient_name,
-                        'certificate_number' => $certificate->certificate_number,
-                        'program_name'       => $certificate->program?->name,
-                        'description'        => $certificate->description,
-                        'issued_at'          => $certificate->issued_at?->toDateString(),
-                        'status'             => $certificate->status,
-                        'is_expired'         => $certificate->isExpired(),
-                        'verification_code'  => $certificate->verification_code,
-                    ],
-                ]);
-        }
-
-        return back()
-            ->with('flash', [
-                'toast' => [
-                    'type' => 'success',
-                    'message' => 'Sertifikat berhasil ditemukan!',
-                ],
-            ])
-            ->with('certificate_search', [
-                'found' => true,
-                'data'  => [
+        return Inertia::render('certificate/Check', [
+            'searchResult' => [
+                'found' => (bool) $certificate,
+                'data'  => $certificate ? [
                     'recipient_name'     => $certificate->recipient_name,
                     'certificate_number' => $certificate->certificate_number,
-                    'program_name'       => $certificate->program?->name,
+                    'program_name'       => $certificate->course_name ?? $certificate->event_name,
                     'description'        => $certificate->description,
                     'issued_at'          => $certificate->issued_at?->toDateString(),
                     'status'             => $certificate->status,
                     'is_expired'         => $certificate->isExpired(),
                     'verification_code'  => $certificate->verification_code,
-                ],
-            ]);
+                ] : null,
+            ],
+        ]);
     }
 
     /**
@@ -111,7 +68,7 @@ class CertificateVerificationController extends Controller
     public function download(string $verificationCode)
     {
         $certificate = Certificate::query()
-            ->with(['template', 'program'])
+            ->with(['template'])   // ✅ 'program' dihapus
             ->where('verification_code', $verificationCode)
             ->where('status', 'published')
             ->firstOrFail();
@@ -125,7 +82,7 @@ class CertificateVerificationController extends Controller
         }
 
         $template = $certificate->template;
-        
+
         $width  = $template?->width ?? 842;
         $height = $template?->height ?? 595;
 

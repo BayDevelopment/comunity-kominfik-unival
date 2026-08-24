@@ -6,13 +6,14 @@ import {
     Loader2,
     Upload,
     X,
+    AlertCircle,
 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import AppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
 import type { BreadcrumbItem } from '@/types';
 
-interface Option {
+interface OptionItem {
     id: number;
     name: string;
 }
@@ -21,10 +22,14 @@ defineOptions({
     layout: AppSidebarLayout,
 });
 
-defineProps<{
-    templates: Option[];
-    programs: Option[];
-}>();
+const props = withDefaults(
+    defineProps<{
+        templates?: OptionItem[];
+    }>(),
+    {
+        templates: () => [],
+    },
+);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -39,28 +44,42 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const form = useForm({
     certificate_template_id: '' as number | '',
-    certificate_program_id: '' as number | '',
     recipient_name: '',
     recipient_email: '',
     event_name: '',
     course_name: '',
     description: '',
+    signatory_name: '',
+    signatory_role: '',
+    signatory_signature_path: null as File | null,
     issued_at: new Date().toISOString().slice(0, 10),
     expired_at: '',
-    signed_by: '',
-    signatory_name: '',
-    signature_image: null as File | null,
     status: 'published' as 'draft' | 'published',
 });
 
-// Preview gambar tanda tangan sebelum di-submit
+// Cek keberadaan data templates secara aman
+const hasTemplates = computed(() => {
+    return Array.isArray(props.templates) && props.templates.length > 0;
+});
+
+// Tombol disabled jika sedang submit, template belum ada/dipilih, atau nama penerima kosong
+const isSubmitDisabled = computed(() => {
+    return (
+        form.processing ||
+        !hasTemplates.value ||
+        !form.certificate_template_id ||
+        !form.recipient_name.trim()
+    );
+});
+
+// Preview gambar tanda tangan
 const signaturePreview = ref<string | null>(null);
 
 function handleSignatureUpload(event: Event) {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0] ?? null;
 
-    form.signature_image = file;
+    form.signatory_signature_path = file;
 
     if (file) {
         signaturePreview.value = URL.createObjectURL(file);
@@ -70,14 +89,18 @@ function handleSignatureUpload(event: Event) {
 }
 
 function removeSignature() {
-    form.signature_image = null;
+    form.signatory_signature_path = null;
     signaturePreview.value = null;
 
-    const input = document.getElementById('signature_image') as HTMLInputElement | null;
+    const input = document.getElementById(
+        'signatory_signature_path',
+    ) as HTMLInputElement | null;
     if (input) input.value = '';
 }
 
 function submit() {
+    if (isSubmitDisabled.value) return;
+
     form.post('/certificate', {
         preserveScroll: true,
         forceFormData: true,
@@ -89,7 +112,7 @@ function submit() {
     <Head title="Terbitkan Sertifikat" />
 
     <div class="mx-auto max-w-3xl space-y-6 p-4 sm:p-6">
-        <!-- Back -->
+        <!-- Back Button -->
         <Link
             href="/certificate"
             class="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 transition hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300"
@@ -101,10 +124,12 @@ function submit() {
         <!-- Form Card -->
         <form
             @submit.prevent="submit"
-            class="rounded-xl border bg-background p-6 shadow-sm dark:border-slate-800 md:p-8"
+            class="rounded-xl border bg-background p-6 shadow-sm md:p-8 dark:border-slate-800"
         >
             <!-- Header -->
-            <div class="flex items-center gap-4 border-b pb-6 dark:border-slate-800">
+            <div
+                class="flex items-center gap-4 border-b pb-6 dark:border-slate-800"
+            >
                 <div
                     class="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400"
                 >
@@ -116,16 +141,38 @@ function submit() {
                         Terbitkan Sertifikat Baru
                     </h1>
                     <p class="text-sm text-muted-foreground">
-                        Isi detail informasi penerima dan template sertifikat.
+                        Isi detail informasi penerima dan pilih template
+                        sertifikat.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Warning Banner bila Template Kosong -->
+            <div
+                v-if="!hasTemplates"
+                class="mt-6 flex items-start gap-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/15 dark:text-amber-400"
+            >
+                <AlertCircle
+                    class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
+                />
+                <div class="text-sm">
+                    <p class="font-semibold">
+                        Template sertifikat belum tersedia
+                    </p>
+                    <p class="mt-0.5 opacity-90">
+                        Belum ada data master template sertifikat di database.
+                        Silakan buat master template terlebih dahulu.
                     </p>
                 </div>
             </div>
 
             <!-- Fields Grid -->
             <div class="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
-                <!-- Template -->
+                <!-- Template Sertifikat -->
                 <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
                         Template Sertifikat
                         <span class="text-rose-500">*</span>
                     </label>
@@ -133,12 +180,18 @@ function submit() {
                     <select
                         v-model="form.certificate_template_id"
                         required
-                        :disabled="templates.length === 0"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-60 dark:border-slate-700 dark:focus:border-orange-400"
+                        :disabled="!hasTemplates"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-60 dark:border-slate-700 dark:focus:border-orange-400"
                     >
-                        <option value="" disabled>Pilih template</option>
+                        <option value="" disabled>
+                            {{
+                                hasTemplates
+                                    ? 'Pilih template sertifikat'
+                                    : 'Template tidak tersedia'
+                            }}
+                        </option>
                         <option
-                            v-for="template in templates"
+                            v-for="template in props.templates"
                             :key="template.id"
                             :value="template.id"
                         >
@@ -147,10 +200,11 @@ function submit() {
                     </select>
 
                     <p
-                        v-if="templates.length === 0"
+                        v-if="!hasTemplates"
                         class="mt-1.5 text-xs font-semibold text-rose-500"
                     >
-                        Belum ada template tersedia. Harap tambahkan template terlebih dahulu.
+                        Dropdown dikunci karena tidak ada template sertifikat
+                        aktif.
                     </p>
 
                     <p
@@ -161,45 +215,11 @@ function submit() {
                     </p>
                 </div>
 
-                <!-- Program -->
-                <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
-                        Program / Kegiatan
-                    </label>
-
-                    <select
-                        v-model="form.certificate_program_id"
-                        :disabled="programs.length === 0"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-60 dark:border-slate-700 dark:focus:border-orange-400"
-                    >
-                        <option value="">Tanpa program spesifik</option>
-                        <option
-                            v-for="program in programs"
-                            :key="program.id"
-                            :value="program.id"
-                        >
-                            {{ program.name }}
-                        </option>
-                    </select>
-
-                    <p
-                        v-if="programs.length === 0"
-                        class="mt-1.5 text-xs font-semibold text-rose-500"
-                    >
-                        Belum ada data program yang tersedia.
-                    </p>
-
-                    <p
-                        v-if="form.errors.certificate_program_id"
-                        class="mt-1.5 text-xs font-semibold text-rose-500"
-                    >
-                        {{ form.errors.certificate_program_id }}
-                    </p>
-                </div>
-
                 <!-- Nama Penerima -->
                 <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
                         Nama Penerima
                         <span class="text-rose-500">*</span>
                     </label>
@@ -209,7 +229,7 @@ function submit() {
                         type="text"
                         required
                         placeholder="Nama lengkap peserta"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -222,15 +242,17 @@ function submit() {
 
                 <!-- Email Penerima -->
                 <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
                         Email Penerima
                     </label>
 
                     <input
                         v-model="form.recipient_email"
                         type="email"
-                        placeholder="Dipakai peserta saat cek sertifikat"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
+                        placeholder="email@example.com"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -241,17 +263,45 @@ function submit() {
                     </p>
                 </div>
 
-                <!-- Nama Kegiatan -->
+                <!-- Status Publikasi -->
                 <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
-                        Nama Kegiatan
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
+                        Status
+                        <span class="text-rose-500">*</span>
+                    </label>
+
+                    <select
+                        v-model="form.status"
+                        required
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
+                    >
+                        <option value="draft">Draf (Draft)</option>
+                        <option value="published">Terbit (Published)</option>
+                    </select>
+
+                    <p
+                        v-if="form.errors.status"
+                        class="mt-1.5 text-xs font-semibold text-rose-500"
+                    >
+                        {{ form.errors.status }}
+                    </p>
+                </div>
+
+                <!-- Nama Event -->
+                <div>
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
+                        Nama Event
                     </label>
 
                     <input
                         v-model="form.event_name"
                         type="text"
-                        placeholder="Contoh: Coding Camp 2026 Batch 1"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
+                        placeholder="Contoh: Webinar National Tech"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -262,17 +312,19 @@ function submit() {
                     </p>
                 </div>
 
-                <!-- Materi / Kursus -->
+                <!-- Nama Kursus / Materi -->
                 <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
-                        Materi / Kursus
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
+                        Nama Kursus / Materi
                     </label>
 
                     <input
                         v-model="form.course_name"
                         type="text"
-                        placeholder="Contoh: Dasar Pemrograman Web"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
+                        placeholder="Contoh: Master Microservices Laravel"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -285,15 +337,17 @@ function submit() {
 
                 <!-- Keterangan -->
                 <div class="md:col-span-2">
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
                         Keterangan Sertifikat
                     </label>
 
                     <textarea
                         v-model="form.description"
-                        rows="4"
-                        placeholder="Contoh: telah menyelesaikan pelatihan selama 40 jam dengan predikat Baik"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
+                        rows="3"
+                        placeholder="Deskripsi singkat pencapaian..."
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     ></textarea>
 
                     <p
@@ -304,16 +358,64 @@ function submit() {
                     </p>
                 </div>
 
+                <!-- Nama Penanda Tangan -->
+                <div>
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
+                        Nama Penanda Tangan
+                    </label>
+
+                    <input
+                        v-model="form.signatory_name"
+                        type="text"
+                        placeholder="Contoh: Alex Ferguson, M.T."
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
+                    />
+
+                    <p
+                        v-if="form.errors.signatory_name"
+                        class="mt-1.5 text-xs font-semibold text-rose-500"
+                    >
+                        {{ form.errors.signatory_name }}
+                    </p>
+                </div>
+
+                <!-- Jabatan Penanda Tangan -->
+                <div>
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
+                        Jabatan Penanda Tangan
+                    </label>
+
+                    <input
+                        v-model="form.signatory_role"
+                        type="text"
+                        placeholder="Contoh: Chief Executive Officer / Instructor"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
+                    />
+
+                    <p
+                        v-if="form.errors.signatory_role"
+                        class="mt-1.5 text-xs font-semibold text-rose-500"
+                    >
+                        {{ form.errors.signatory_role }}
+                    </p>
+                </div>
+
                 <!-- Tanggal Terbit -->
                 <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
                         Tanggal Terbit
                     </label>
 
                     <input
                         v-model="form.issued_at"
                         type="date"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -324,17 +426,18 @@ function submit() {
                     </p>
                 </div>
 
-                <!-- Tanggal Kedaluwarsa -->
+                <!-- Tanggal Expired -->
                 <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
                         Berlaku Sampai
-                        <span class="font-normal text-muted-foreground">(opsional)</span>
                     </label>
 
                     <input
                         v-model="form.expired_at"
                         type="date"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
                     />
 
                     <p
@@ -345,98 +448,24 @@ function submit() {
                     </p>
                 </div>
 
-                <!-- Ditandatangani Oleh -->
-                <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
-                        Ditandatangani oleh
-                    </label>
-
-                    <input
-                        v-model="form.signed_by"
-                        type="text"
-                        placeholder="Contoh: Ketua Panitia"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
-                    />
-
-                    <p
-                        v-if="form.errors.signed_by"
-                        class="mt-1.5 text-xs font-semibold text-rose-500"
-                    >
-                        {{ form.errors.signed_by }}
-                    </p>
-                </div>
-
-                <!-- Status -->
-                <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
-                        Status
-                        <span class="text-rose-500">*</span>
-                    </label>
-
-                    <select
-                        v-model="form.status"
-                        required
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
-                    >
-                        <option value="draft">
-                            Draf — belum bisa diunduh publik
-                        </option>
-                        <option value="published">
-                            Terbit — langsung bisa dicek & diunduh
-                        </option>
-                    </select>
-
-                    <p
-                        v-if="form.errors.status"
-                        class="mt-1.5 text-xs font-semibold text-rose-500"
-                    >
-                        {{ form.errors.status }}
-                    </p>
-                </div>
-
-                <!-- Nama Resmi Penanda Tangan -->
-                <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
-                        Nama Resmi Penanda Tangan
-                        <span class="font-normal text-muted-foreground">(opsional)</span>
-                    </label>
-
-                    <input
-                        v-model="form.signatory_name"
-                        type="text"
-                        placeholder="Contoh: Hery Firmansyah"
-                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 dark:border-slate-700 dark:focus:border-orange-400"
-                    />
-
-                    <p class="mt-1.5 text-xs text-muted-foreground">
-                        Kalau diisi, nama ini yang tampil di sertifikat (bukan "Ditandatangani oleh" di atas).
-                    </p>
-
-                    <p
-                        v-if="form.errors.signatory_name"
-                        class="mt-1.5 text-xs font-semibold text-rose-500"
-                    >
-                        {{ form.errors.signatory_name }}
-                    </p>
-                </div>
-
                 <!-- Gambar Tanda Tangan -->
-                <div>
-                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                <div class="md:col-span-2">
+                    <label
+                        class="mb-2 block text-sm font-semibold text-foreground"
+                    >
                         Gambar Tanda Tangan
-                        <span class="font-normal text-muted-foreground">(opsional, PNG/JPG maks 2MB)</span>
                     </label>
 
                     <div v-if="!signaturePreview">
                         <label
-                            for="signature_image"
-                            class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-input px-4 py-4 text-sm font-medium text-muted-foreground transition hover:border-orange-500 hover:text-orange-600 dark:border-slate-700 dark:hover:border-orange-400 dark:hover:text-orange-400"
+                            for="signatory_signature_path"
+                            class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-input px-4 py-3 text-sm font-medium text-muted-foreground transition hover:border-orange-500 hover:text-orange-600 dark:border-slate-700 dark:hover:border-orange-400 dark:hover:text-orange-400"
                         >
                             <Upload class="h-4 w-4" />
-                            Klik untuk upload gambar tanda tangan
+                            Upload Tanda Tangan (PNG Transparan)
                         </label>
                         <input
-                            id="signature_image"
+                            id="signatory_signature_path"
                             type="file"
                             accept="image/png,image/jpeg,image/jpg"
                             class="hidden"
@@ -450,11 +479,13 @@ function submit() {
                     >
                         <img
                             :src="signaturePreview"
-                            alt="Preview tanda tangan"
+                            alt="Preview Tanda Tangan"
                             class="h-12 w-auto rounded border bg-white object-contain p-1"
                         />
-                        <span class="flex-1 truncate text-xs text-muted-foreground">
-                            {{ form.signature_image?.name }}
+                        <span
+                            class="flex-1 truncate text-xs text-muted-foreground"
+                        >
+                            {{ form.signatory_signature_path?.name }}
                         </span>
                         <button
                             type="button"
@@ -466,10 +497,10 @@ function submit() {
                     </div>
 
                     <p
-                        v-if="form.errors.signature_image"
+                        v-if="form.errors.signatory_signature_path"
                         class="mt-1.5 text-xs font-semibold text-rose-500"
                     >
-                        {{ form.errors.signature_image }}
+                        {{ form.errors.signatory_signature_path }}
                     </p>
                 </div>
             </div>
@@ -477,17 +508,16 @@ function submit() {
             <!-- Submit Button -->
             <button
                 type="submit"
-                :disabled="form.processing || templates.length === 0"
-                class="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-orange-500 dark:hover:bg-orange-600"
+                :disabled="isSubmitDisabled"
+                class="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500 disabled:opacity-70 dark:bg-orange-500 dark:hover:bg-orange-600 dark:disabled:bg-slate-800 dark:disabled:text-slate-500"
             >
-                <Loader2
-                    v-if="form.processing"
-                    class="h-4 w-4 animate-spin"
-                />
+                <Loader2 v-if="form.processing" class="h-4 w-4 animate-spin" />
                 {{
                     form.processing
                         ? 'Menyimpan...'
-                        : 'Terbitkan Sertifikat'
+                        : !hasTemplates
+                          ? 'Tidak Bisa Menerbitkan (Template Kosong)'
+                          : 'Terbitkan Sertifikat'
                 }}
             </button>
         </form>

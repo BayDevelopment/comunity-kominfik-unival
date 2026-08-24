@@ -1,17 +1,21 @@
 <script setup lang="ts">
+import { ref, onUnmounted } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Loader2, Save, Upload } from 'lucide-vue-next';
+import { ArrowLeft, Loader2, Save, Upload, X } from 'lucide-vue-next';
 import AppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
 
+// Interface disesuaikan dengan Model Eloquent & Accessor background_url
 interface CertificateTemplate {
     id: number;
     name: string;
     slug: string;
+    background_image: string | null;
     background_url: string | null;
     orientation: 'landscape' | 'portrait';
     width: number;
     height: number;
     is_active: boolean;
+    created_by?: number | null;
 }
 
 const props = defineProps<{
@@ -27,23 +31,26 @@ defineOptions({
     ],
 });
 
+// Form Inertia disesuaikan dengan $fillable model
 const form = useForm({
     _method: 'PUT',
     name: props.template.name,
     orientation: props.template.orientation,
     width: props.template.width,
     height: props.template.height,
-    is_active: props.template.is_active,
+    is_active: Boolean(props.template.is_active),
     background_image: null as File | null,
 });
 
-// Fungsi Validasi File Gambar
+const newPreviewUrl = ref<string | null>(null);
+
+// Validasi File Gambar
 function validateImage(file: File, fieldName: 'background_image') {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
     const maxSize = 2 * 1024 * 1024; // 2MB
 
     if (!allowedTypes.includes(file.type)) {
-        form.setError(fieldName, 'Ekstensi file tidak sesuai. Harap unggah gambar dengan format JPG, JPEG, atau PNG.');
+        form.setError(fieldName, 'Ekstensi file tidak sesuai. Harap unggah gambar format JPG, JPEG, atau PNG.');
         return false;
     }
 
@@ -57,17 +64,29 @@ function validateImage(file: File, fieldName: 'background_image') {
 
 function handleFileChange(e: Event) {
     const target = e.target as HTMLInputElement;
-    form.clearErrors('background_image'); 
+    form.clearErrors('background_image');
     
     if (target.files && target.files[0]) {
         const file = target.files[0];
         
         if (validateImage(file, 'background_image')) {
             form.background_image = file;
+            if (newPreviewUrl.value) {
+                URL.revokeObjectURL(newPreviewUrl.value);
+            }
+            newPreviewUrl.value = URL.createObjectURL(file);
         } else {
-            target.value = ''; 
-            form.background_image = null;
+            target.value = '';
+            removeNewImage();
         }
+    }
+}
+
+function removeNewImage() {
+    form.background_image = null;
+    if (newPreviewUrl.value) {
+        URL.revokeObjectURL(newPreviewUrl.value);
+        newPreviewUrl.value = null;
     }
 }
 
@@ -76,6 +95,12 @@ function submit() {
         forceFormData: true,
     });
 }
+
+onUnmounted(() => {
+    if (newPreviewUrl.value) {
+        URL.revokeObjectURL(newPreviewUrl.value);
+    }
+});
 </script>
 
 <template>
@@ -155,6 +180,7 @@ function submit() {
             <div class="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <label class="block text-sm font-bold text-slate-900 mb-2 mt-4 dark:text-slate-200">Ganti Gambar Latar Belakang (Opsional)</label>
 
+                <!-- Preview Gambar yang Ada di Storage (menggunakan background_url dari Model) -->
                 <div v-if="template.background_url && !form.background_image" class="mb-3 flex items-center gap-4 rounded-xl border border-slate-200 p-3 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60">
                     <img :src="template.background_url" alt="Current Background" class="h-16 w-28 object-cover rounded-lg border border-slate-200 dark:border-slate-700" />
                     <div>
@@ -163,13 +189,26 @@ function submit() {
                     </div>
                 </div>
 
+                <!-- Preview Gambar Baru sebelum Upload -->
+                <div v-if="newPreviewUrl" class="mb-3 flex items-center justify-between gap-4 rounded-xl border border-orange-200 p-3 bg-orange-50/30 dark:border-orange-900/40 dark:bg-slate-800/80">
+                    <div class="flex items-center gap-4">
+                        <img :src="newPreviewUrl" alt="New Background Preview" class="h-16 w-28 object-cover rounded-lg border border-orange-300 dark:border-orange-800" />
+                        <div>
+                            <p class="text-xs font-bold text-orange-900 dark:text-orange-300">File Baru Terpilih</p>
+                            <p class="text-xs text-slate-600 dark:text-slate-400">{{ form.background_image?.name }}</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="removeNewImage" class="p-1 text-slate-400 hover:text-rose-600 transition">
+                        <X class="w-5 h-5" />
+                    </button>
+                </div>
+
                 <div class="flex items-center justify-center w-full">
                     <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-orange-200 rounded-2xl cursor-pointer bg-orange-50/50 hover:bg-orange-50 transition dark:border-orange-900/50 dark:bg-slate-800/40 dark:hover:bg-slate-800/80">
                         <div class="flex flex-col items-center justify-center pt-5 pb-6 px-4 text-center">
                             <Upload class="w-7 h-7 mb-2 text-orange-500 dark:text-orange-400" />
                             <p class="text-sm font-bold text-slate-700 dark:text-slate-300">
-                                <span v-if="form.background_image">{{ form.background_image.name }}</span>
-                                <span v-else>Klik untuk mengganti latar belakang</span>
+                                Klik untuk memilih gambar latar belakang baru
                             </p>
                             <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">PNG, JPG (Maks. 2MB)</p>
                         </div>
@@ -181,7 +220,7 @@ function submit() {
                 </div>
             </div>
 
-            <!-- Status Aktif -->
+            <!-- Status Aktif (is_active) -->
             <div class="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <input
                     v-model="form.is_active"

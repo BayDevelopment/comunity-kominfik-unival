@@ -78,7 +78,7 @@ function formatCount(value: number): string {
 
 const statCards = computed(() => [
     { value: formatCount(props.stats.project), label: 'Project Digital' },
-    { value: `${props.stats.avg_progress}%`, label: 'Rata-rata Progress' }, // Tambahan dinamis
+    { value: `${props.stats.avg_progress || 0}%`, label: 'Rata-rata Progress' },
     { value: formatCount(props.stats.anggota), label: 'Anggota Aktif' },
     { value: formatCount(props.stats.layanan), label: 'Layanan Tersedia' },
 ]);
@@ -226,7 +226,7 @@ const scrollMembers = (direction: 'prev' | 'next') => {
                         </div>
 
                         <!-- Stats dari database -->
-                        <div class="mt-10 grid max-w-xl grid-cols-3 gap-4">
+                        <div class="mt-10 grid max-w-4xl grid-cols-2 gap-4 sm:grid-cols-4">
                             <div
                                 v-for="item in statCards"
                                 :key="item.label"
@@ -235,9 +235,7 @@ const scrollMembers = (direction: 'prev' | 'next') => {
                                 <h3 class="text-2xl font-black text-slate-950">
                                     {{ item.value }}
                                 </h3>
-                                <p
-                                    class="mt-1 text-xs font-semibold text-slate-500"
-                                >
+                                <p class="mt-1 text-xs font-semibold text-slate-500">
                                     {{ item.label }}
                                 </p>
                             </div>

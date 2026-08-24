@@ -151,7 +151,8 @@ const submit = () => {
                                         Password
                                     </label>
 
-                                    <Link v-if="canResetPassword" :href="request().url"
+                                    <!-- v-if="canResetPassword" dihapus agar selalu tampil -->
+                                    <Link :href="request().url"
                                         class="shrink-0 text-xs font-black text-orange-600 transition hover:text-orange-700 hover:underline">
                                         Lupa password?
                                     </Link>

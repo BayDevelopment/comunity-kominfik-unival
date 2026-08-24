@@ -1,0 +1,509 @@
+<script setup lang="ts">
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Award, ArrowLeft, Loader2, CheckCircle2, Upload, X } from 'lucide-vue-next';
+
+import AppSidebarLayout from '@/layouts/app/AppSidebarLayout.vue';
+import type { BreadcrumbItem } from '@/types';
+import { ref } from 'vue';
+
+interface Option {
+    id: number;
+    name: string;
+}
+
+interface CertificateDetail {
+    id: number;
+    certificate_template_id: number;
+    certificate_program_id: number | null;
+    recipient_name: string;
+    recipient_email: string | null;
+    event_name: string | null;
+    course_name: string | null;
+    description: string | null;
+    issued_at: string;
+    expired_at: string | null;
+    signed_by: string | null;
+    signatory_name: string | null;
+    signatory_signature_url: string | null;
+    status: 'draft' | 'published' | 'revoked';
+}
+
+const props = defineProps<{
+    certificate: CertificateDetail;
+    templates: Option[];
+    programs: Option[];
+}>();
+
+defineOptions({
+    layout: AppSidebarLayout,
+});
+
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Sertifikat', href: '/certificate' },
+    { title: props.certificate.recipient_name, href: `/certificate/${props.certificate.id}` },
+    { title: 'Edit', href: `/certificate/${props.certificate.id}/edit` },
+];
+
+const form = useForm({
+    certificate_template_id: props.certificate.certificate_template_id,
+    certificate_program_id: props.certificate.certificate_program_id ?? ('' as number | ''),
+    recipient_name: props.certificate.recipient_name,
+    recipient_email: props.certificate.recipient_email ?? '',
+    event_name: props.certificate.event_name ?? '',
+    course_name: props.certificate.course_name ?? '',
+    description: props.certificate.description ?? '',
+    issued_at: props.certificate.issued_at?.slice(0, 10) ?? '',
+    expired_at: props.certificate.expired_at?.slice(0, 10) ?? '',
+    signed_by: props.certificate.signed_by ?? '',
+    signatory_name: props.certificate.signatory_name ?? '',
+    signature_image: null as File | null,
+    status: props.certificate.status,
+});
+
+// Preview: file baru yang dipilih (kalau ada) menggantikan tampilan tanda tangan lama
+const newSignaturePreview = ref<string | null>(null);
+
+function handleSignatureUpload(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0] ?? null;
+
+    form.signature_image = file;
+
+    if (file) {
+        newSignaturePreview.value = URL.createObjectURL(file);
+    } else {
+        newSignaturePreview.value = null;
+    }
+}
+
+function removeNewSignature() {
+    form.signature_image = null;
+    newSignaturePreview.value = null;
+
+    const input = document.getElementById('signature_image') as HTMLInputElement | null;
+    if (input) input.value = '';
+}
+
+function submit() {
+    form.put(`/certificate/${props.certificate.id}`, {
+        preserveScroll: true,
+        forceFormData: true,
+    });
+}
+</script>
+
+<template>
+    <Head title="Edit Sertifikat" />
+
+    <div class="mx-auto max-w-3xl space-y-6 p-6">
+        <!-- Back -->
+        <Link
+            :href="`/certificate/${certificate.id}`"
+            class="inline-flex items-center gap-2 text-sm font-semibold text-orange-600 transition hover:text-orange-700"
+        >
+            <ArrowLeft class="h-4 w-4" />
+            Kembali ke detail sertifikat
+        </Link>
+
+        <!-- Success Alert -->
+        <div
+            v-if="form.recentlySuccessful"
+            class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-emerald-800 shadow-sm dark:bg-emerald-500/10 dark:text-emerald-400"
+        >
+            <CheckCircle2 class="h-5 w-5 shrink-0" />
+            <div class="text-sm font-semibold">
+                Perubahan berhasil disimpan.
+            </div>
+        </div>
+
+        <!-- Warning Note -->
+        <div
+            v-if="form.status === 'published' && certificate.status === 'published'"
+            class="rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-xs font-semibold text-amber-800 shadow-sm"
+        >
+            Catatan: mengubah data sertifikat yang sudah terbit akan menghapus PDF lama, PDF baru otomatis di-generate saat berikutnya diunduh.
+        </div>
+
+        <!-- Form Card -->
+        <form
+            @submit.prevent="submit"
+            class="rounded-xl border bg-background p-6 shadow-sm md:p-8"
+        >
+            <!-- Header -->
+            <div class="flex items-center gap-4 border-b pb-6">
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600">
+                    <Award class="h-6 w-6" stroke-width="2.2" />
+                </div>
+
+                <div>
+                    <h1 class="text-xl font-bold">Edit Sertifikat</h1>
+                    <p class="text-sm text-muted-foreground">
+                        Perbarui informasi penerima dan konfigurasi sertifikat.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Fields Grid -->
+            <div class="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
+                <!-- Template -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Template Sertifikat
+                        <span class="text-rose-500">*</span>
+                    </label>
+
+                    <select
+                        v-model="form.certificate_template_id"
+                        required
+                        :disabled="templates.length === 0"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-60"
+                    >
+                        <option value="" disabled>
+                            Pilih template
+                        </option>
+                        <option
+                            v-for="template in templates"
+                            :key="template.id"
+                            :value="template.id"
+                        >
+                            {{ template.name }}
+                        </option>
+                    </select>
+
+                    <p v-if="templates.length === 0" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        Belum ada template tersedia. Harap tambahkan template terlebih dahulu.
+                    </p>
+
+                    <p v-if="form.errors.certificate_template_id" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.certificate_template_id }}
+                    </p>
+                </div>
+
+                <!-- Program -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Program / Kegiatan
+                    </label>
+
+                    <select
+                        v-model="form.certificate_program_id"
+                        :disabled="programs.length === 0"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-60"
+                    >
+                        <option value="">
+                            Tanpa program spesifik
+                        </option>
+                        <option
+                            v-for="program in programs"
+                            :key="program.id"
+                            :value="program.id"
+                        >
+                            {{ program.name }}
+                        </option>
+                    </select>
+
+                    <p v-if="programs.length === 0" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        Belum ada data program yang tersedia.
+                    </p>
+
+                    <p v-if="form.errors.certificate_program_id" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.certificate_program_id }}
+                    </p>
+                </div>
+
+                <!-- Nama Penerima -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Nama Penerima
+                        <span class="text-rose-500">*</span>
+                    </label>
+
+                    <input
+                        v-model="form.recipient_name"
+                        type="text"
+                        required
+                        placeholder="Nama lengkap peserta"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    />
+
+                    <p v-if="form.errors.recipient_name" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.recipient_name }}
+                    </p>
+                </div>
+
+                <!-- Email Penerima -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Email Penerima
+                    </label>
+
+                    <input
+                        v-model="form.recipient_email"
+                        type="email"
+                        placeholder="Dipakai peserta saat cek sertifikat"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    />
+
+                    <p v-if="form.errors.recipient_email" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.recipient_email }}
+                    </p>
+                </div>
+
+                <!-- Nama Kegiatan -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Nama Kegiatan
+                    </label>
+
+                    <input
+                        v-model="form.event_name"
+                        type="text"
+                        placeholder="Contoh: Coding Camp 2026 Batch 1"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    />
+
+                    <p v-if="form.errors.event_name" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.event_name }}
+                    </p>
+                </div>
+
+                <!-- Materi / Kursus -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Materi / Kursus
+                    </label>
+
+                    <input
+                        v-model="form.course_name"
+                        type="text"
+                        placeholder="Contoh: Dasar Pemrograman Web"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    />
+
+                    <p v-if="form.errors.course_name" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.course_name }}
+                    </p>
+                </div>
+
+                <!-- Keterangan -->
+                <div class="md:col-span-2">
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Keterangan Sertifikat
+                    </label>
+
+                    <textarea
+                        v-model="form.description"
+                        rows="4"
+                        placeholder="Contoh: telah menyelesaikan pelatihan selama 40 jam dengan predikat Baik"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    ></textarea>
+
+                    <p v-if="form.errors.description" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.description }}
+                    </p>
+                </div>
+
+                <!-- Tanggal Terbit -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Tanggal Terbit
+                    </label>
+
+                    <input
+                        v-model="form.issued_at"
+                        type="date"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    />
+
+                    <p v-if="form.errors.issued_at" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.issued_at }}
+                    </p>
+                </div>
+
+                <!-- Tanggal Kedaluwarsa -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Berlaku Sampai
+                        <span class="font-normal text-muted-foreground">(opsional)</span>
+                    </label>
+
+                    <input
+                        v-model="form.expired_at"
+                        type="date"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    />
+
+                    <p v-if="form.errors.expired_at" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.expired_at }}
+                    </p>
+                </div>
+
+                <!-- Ditandatangani Oleh -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Ditandatangani oleh
+                    </label>
+
+                    <input
+                        v-model="form.signed_by"
+                        type="text"
+                        placeholder="Contoh: Ketua Panitia"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    />
+
+                    <p v-if="form.errors.signed_by" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.signed_by }}
+                    </p>
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Status
+                        <span class="text-rose-500">*</span>
+                    </label>
+
+                    <select
+                        v-model="form.status"
+                        required
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    >
+                        <option value="draft">Draf</option>
+                        <option value="published">Terbit</option>
+                        <option value="revoked">Dicabut</option>
+                    </select>
+
+                    <p v-if="form.errors.status" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.status }}
+                    </p>
+                </div>
+
+                <!-- Nama Resmi Penanda Tangan -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Nama Resmi Penanda Tangan
+                        <span class="font-normal text-muted-foreground">(opsional)</span>
+                    </label>
+
+                    <input
+                        v-model="form.signatory_name"
+                        type="text"
+                        placeholder="Contoh: Hery Firmansyah"
+                        class="w-full rounded-lg border bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    />
+
+                    <p class="mt-1.5 text-xs text-muted-foreground">
+                        Kalau diisi, nama ini yang tampil di sertifikat (bukan "Ditandatangani oleh" di atas).
+                    </p>
+
+                    <p v-if="form.errors.signatory_name" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.signatory_name }}
+                    </p>
+                </div>
+
+                <!-- Gambar Tanda Tangan -->
+                <div>
+                    <label class="mb-2 block text-sm font-semibold text-foreground">
+                        Gambar Tanda Tangan
+                        <span class="font-normal text-muted-foreground">(opsional, PNG/JPG maks 2MB)</span>
+                    </label>
+
+                    <!-- Sudah ada file baru dipilih -> tampilkan preview file baru -->
+                    <div
+                        v-if="newSignaturePreview"
+                        class="flex items-center gap-3 rounded-lg border bg-muted/30 p-3"
+                    >
+                        <img
+                            :src="newSignaturePreview"
+                            alt="Preview tanda tangan baru"
+                            class="h-12 w-auto rounded border bg-white object-contain p-1"
+                        />
+                        <span class="flex-1 truncate text-xs text-muted-foreground">
+                            {{ form.signature_image?.name }} (baru)
+                        </span>
+                        <button
+                            type="button"
+                            @click="removeNewSignature"
+                            class="rounded-md p-1.5 text-rose-500 transition hover:bg-rose-50"
+                        >
+                            <X class="h-4 w-4" />
+                        </button>
+                    </div>
+
+                    <!-- Belum pilih file baru, tapi sudah ada tanda tangan tersimpan -> tampilkan yg lama + tombol ganti -->
+                    <div
+                        v-else-if="certificate.signatory_signature_url"
+                        class="space-y-2"
+                    >
+                        <div class="flex items-center gap-3 rounded-lg border bg-muted/30 p-3">
+                            <img
+                                :src="certificate.signatory_signature_url"
+                                alt="Tanda tangan tersimpan"
+                                class="h-12 w-auto rounded border bg-white object-contain p-1"
+                            />
+                            <span class="flex-1 text-xs text-muted-foreground">
+                                Tanda tangan tersimpan
+                            </span>
+                        </div>
+
+                        <label
+                            for="signature_image"
+                            class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-2.5 text-xs font-medium text-muted-foreground transition hover:border-orange-500 hover:text-orange-600"
+                        >
+                            <Upload class="h-3.5 w-3.5" />
+                            Ganti dengan gambar baru
+                        </label>
+                        <input
+                            id="signature_image"
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg"
+                            class="hidden"
+                            @change="handleSignatureUpload"
+                        />
+                    </div>
+
+                    <!-- Belum ada tanda tangan sama sekali -->
+                    <div v-else>
+                        <label
+                            for="signature_image"
+                            class="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-4 text-sm font-medium text-muted-foreground transition hover:border-orange-500 hover:text-orange-600"
+                        >
+                            <Upload class="h-4 w-4" />
+                            Klik untuk upload gambar tanda tangan
+                        </label>
+                        <input
+                            id="signature_image"
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg"
+                            class="hidden"
+                            @change="handleSignatureUpload"
+                        />
+                    </div>
+
+                    <p v-if="form.errors.signature_image" class="mt-1.5 text-xs font-semibold text-rose-500">
+                        {{ form.errors.signature_image }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Submit Button / Actions -->
+            <div class="mt-8 flex items-center justify-end gap-3">
+                <Link
+                    :href="`/certificate/${certificate.id}`"
+                    class="rounded-xl border border-input bg-background px-5 py-2.5 text-sm font-semibold text-foreground transition hover:bg-muted"
+                >
+                    Batal
+                </Link>
+
+                <button
+                    type="submit"
+                    :disabled="form.processing || templates.length === 0"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                    <Loader2 v-if="form.processing" class="h-4 w-4 animate-spin" />
+                    {{ form.processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
+                </button>
+            </div>
+        </form>
+    </div>
+</template>

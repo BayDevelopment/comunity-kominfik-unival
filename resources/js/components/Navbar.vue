@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { Award } from 'lucide-vue-next';
 import logoSrc from '@/images/logo-kominfik.png';
 
 const page = usePage();
@@ -75,6 +76,15 @@ function goToSection(id: string) {
 
             <!-- Desktop Action -->
             <div class="hidden items-center gap-3 md:flex">
+                <!-- Cek Sertifikat: halaman terpisah, bukan scroll section -->
+                <Link
+                    href="/sertifikat"
+                    class="inline-flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-600 transition duration-300 hover:bg-orange-50 hover:text-orange-600"
+                >
+                    <Award class="h-4 w-4" />
+                    Cek Sertifikat
+                </Link>
+
                 <template v-if="user">
                     <Link
                         href="/dashboard"
@@ -158,6 +168,16 @@ function goToSection(id: string) {
                     >
                         {{ item.label }}
                     </a>
+
+                    <!-- Cek Sertifikat di mobile menu -->
+                    <Link
+                        href="/sertifikat"
+                        class="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-orange-50 hover:text-orange-700"
+                        @click="mobileOpen = false"
+                    >
+                        <Award class="h-4 w-4" />
+                        Cek Sertifikat
+                    </Link>
                 </div>
 
                 <div class="mt-4 grid grid-cols-2 gap-3">

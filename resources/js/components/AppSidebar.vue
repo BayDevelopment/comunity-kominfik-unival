@@ -9,6 +9,8 @@ import {
     CalendarRange,
     UserPlus,
     Handshake,
+    Award,
+    LayoutTemplate,
 } from 'lucide-vue-next';
 
 import AppLogo from '@/components/AppLogo.vue';
@@ -29,6 +31,7 @@ import * as periodePendaftaran from '@/routes/periode-pendaftaran';
 import type { NavItem } from '@/types';
 import * as pendaftaranAnggota from '@/routes/pendaftaran-anggota';
 import * as pendaftaranKerjasama from '@/routes/pendaftaran-kerjasama';
+import * as certificate from '@/routes/certificate';
 
 const mainNavItems: NavItem[] = [
     {
@@ -65,6 +68,16 @@ const mainNavItems: NavItem[] = [
         title: 'Kerjasama',
         href: pendaftaranKerjasama.index(),
         icon: Handshake,
+    },
+    {
+        title: 'Sertifikat',
+        href: certificate.index(),
+        icon: Award,
+    },
+    {
+        title: 'Template Sertifikat',
+        href: '/certificate-template',
+        icon: LayoutTemplate,
     },
 ];
 

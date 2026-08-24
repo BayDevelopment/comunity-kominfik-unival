@@ -10,7 +10,10 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.ts'],
+            input: [
+                'resources/css/app.css',
+                'resources/js/app.ts',
+            ],
             refresh: true,
             fonts: [
                 bunny('Instrument Sans', {
@@ -18,8 +21,13 @@ export default defineConfig({
                 }),
             ],
         }),
-        inertia(),
+
+        inertia({
+            ssr: false,
+        }),
+
         tailwindcss(),
+
         vue({
             template: {
                 transformAssetUrls: {
@@ -28,13 +36,18 @@ export default defineConfig({
                 },
             },
         }),
+
         wayfinder({
             formVariants: true,
         }),
+
         VitePWA({
             registerType: 'autoUpdate',
 
-            includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+            includeAssets: [
+                'favicon.ico',
+                'apple-touch-icon.png',
+            ],
 
             manifest: {
                 name: 'KOMINFIK',
@@ -45,6 +58,7 @@ export default defineConfig({
                 display: 'standalone',
                 start_url: '/',
                 scope: '/',
+
                 icons: [
                     {
                         src: '/icon-192.png',
@@ -66,12 +80,15 @@ export default defineConfig({
             },
 
             workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+                globPatterns: [
+                    '**/*.{js,css,html,ico,png,svg,woff2}',
+                ],
 
-                navigateFallbackDenylist: [/^\/api/, /^\/login/, /^\/logout/],
-
-                // hapus ini untuk Laravel Inertia
-                // navigateFallback: '/index.html',
+                navigateFallbackDenylist: [
+                    /^\/api/,
+                    /^\/login/,
+                    /^\/logout/,
+                ],
             },
         }),
     ],

@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\Admin\CertificateController;
 use App\Http\Controllers\AnggotaController;
+use App\Http\Controllers\CertificateTemplateController;
+use App\Http\Controllers\CertificateVerificationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JoinController;
@@ -16,14 +19,15 @@ use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// ---------- ROUTE PUBLIK ----------
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::inertia('/project', 'Project')->name('project');
-Route::inertia('/anggota', 'Anggota')->name('anggota');
-Route::inertia('/layanan', 'Layanan')->name('layanan');
+// Ditambahkan agar middleware 'auth' tahu kemana harus me-redirect user
+Route::get('/login', function () {
+    return Inertia::render('auth/Login');
+})->name('login');
 
 Route::get('/join', [JoinController::class, 'join']);
-
 
 Route::get('/join/anggota', [JoinController::class, 'anggota'])->name('join.anggota');
 Route::post('/join/anggota', [JoinController::class, 'storeAnggota'])
@@ -31,12 +35,23 @@ Route::post('/join/anggota', [JoinController::class, 'storeAnggota'])
     ->name('join.anggota.store');
 
 Route::get('/join/kerjasama', [JoinController::class, 'kerjasamaUniversity'])->name('join.kerjasama.university');
-
 Route::post('/join/kerjasama', [JoinController::class, 'storeKerjasama'])
     ->middleware('throttle:5,1')
     ->name('join.kerjasama.university.store');
 
+// Certificate Verification (Public)
+Route::get('/sertifikat', [CertificateVerificationController::class, 'index'])
+    ->name('sertifikat.index');
 
+Route::post('/sertifikat/cari', [CertificateVerificationController::class, 'search'])
+    ->middleware('throttle:5,1')
+    ->name('sertifikat.cari');
+
+Route::get('/sertifikat/{verificationCode}/download', [CertificateVerificationController::class, 'download'])
+    ->name('sertifikat.download');
+
+
+// ---------- ROUTE PROTECTED (MEMBER / ADMIN) ----------
 Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
@@ -92,56 +107,38 @@ Route::middleware(['auth', 'verified', 'academy'])->group(function () {
         ->name('pendaftaran-anggota.tolak');
     Route::delete('/pendaftaran-anggota/{pendaftaranAnggota}', [PendaftaranAnggotaController::class, 'destroy'])->name('pendaftaran-anggota.destroy');
 
-    /// Pendaftaran Kerjasama routes
-    Route::get(
-        '/pendaftaran-kerjasama',
-        [PendaftaranKerjasamaController::class, 'index']
-    )->name('pendaftaran-kerjasama.index');
+    // Pendaftaran Kerjasama routes
+    Route::get('/pendaftaran-kerjasama', [PendaftaranKerjasamaController::class, 'index'])->name('pendaftaran-kerjasama.index');
+    Route::get('/pendaftaran-kerjasama/create', [PendaftaranKerjasamaController::class, 'create'])->name('pendaftaran-kerjasama.create');
+    Route::post('/pendaftaran-kerjasama', [PendaftaranKerjasamaController::class, 'store'])->name('pendaftaran-kerjasama.store');
+    Route::get('/pendaftaran-kerjasama/{pendaftaran}/edit', [PendaftaranKerjasamaController::class, 'edit'])->name('pendaftaran-kerjasama.edit');
+    Route::put('/pendaftaran-kerjasama/{pendaftaran}', [PendaftaranKerjasamaController::class, 'update'])->name('pendaftaran-kerjasama.update');
+    Route::patch('/pendaftaran-kerjasama/{pendaftaran}/proses', [PendaftaranKerjasamaController::class, 'proses'])->name('pendaftaran-kerjasama.proses');
+    Route::patch('/pendaftaran-kerjasama/{pendaftaran}/terima', [PendaftaranKerjasamaController::class, 'terima'])->name('pendaftaran-kerjasama.terima');
+    Route::patch('/pendaftaran-kerjasama/{pendaftaran}/tolak', [PendaftaranKerjasamaController::class, 'tolak'])->name('pendaftaran-kerjasama.tolak');
+    Route::get('/pendaftaran-kerjasama/{pendaftaran}', [PendaftaranKerjasamaController::class, 'show'])->name('pendaftaran-kerjasama.show');
+    Route::delete('/pendaftaran-kerjasama/{pendaftaran}', [PendaftaranKerjasamaController::class, 'destroy'])->name('pendaftaran-kerjasama.destroy');
 
-    Route::get(
-        '/pendaftaran-kerjasama/create',
-        [PendaftaranKerjasamaController::class, 'create']
-    )->name('pendaftaran-kerjasama.create');
+    // Certificate (Admin)
+    Route::get('/certificate', [CertificateController::class, 'index'])->name('certificate.index');
+    Route::get('/certificate/create', [CertificateController::class, 'create'])->name('certificate.create');
+    Route::post('/certificate', [CertificateController::class, 'store'])->name('certificate.store');
+    Route::get('/certificate/{certificate}', [CertificateController::class, 'show'])->name('certificate.show');
+    Route::get('/certificate/{certificate}/edit', [CertificateController::class, 'edit'])->name('certificate.edit');
+    Route::put('/certificate/{certificate}', [CertificateController::class, 'update'])->name('certificate.update');
+    Route::delete('/certificate/{certificate}', [CertificateController::class, 'destroy'])->name('certificate.destroy');
 
-    Route::post(
-        '/pendaftaran-kerjasama',
-        [PendaftaranKerjasamaController::class, 'store']
-    )->name('pendaftaran-kerjasama.store');
+    // certificate-template
+    Route::resource('certificate-template', CertificateTemplateController::class)->parameters([
+        'certificate-template' => 'certificateTemplate'
+    ]);
 
-    Route::get(
-        '/pendaftaran-kerjasama/{pendaftaran}/edit',
-        [PendaftaranKerjasamaController::class, 'edit']
-    )->name('pendaftaran-kerjasama.edit');
+    // Custom action
+    Route::patch('certificate/{certificate}/revoke', [CertificateController::class, 'revoke'])
+        ->name('certificate.revoke');
 
-    Route::put(
-        '/pendaftaran-kerjasama/{pendaftaran}',
-        [PendaftaranKerjasamaController::class, 'update']
-    )->name('pendaftaran-kerjasama.update');
-
-    Route::patch(
-        '/pendaftaran-kerjasama/{pendaftaran}/proses',
-        [PendaftaranKerjasamaController::class, 'proses']
-    )->name('pendaftaran-kerjasama.proses');
-
-    Route::patch(
-        '/pendaftaran-kerjasama/{pendaftaran}/terima',
-        [PendaftaranKerjasamaController::class, 'terima']
-    )->name('pendaftaran-kerjasama.terima');
-
-    Route::patch(
-        '/pendaftaran-kerjasama/{pendaftaran}/tolak',
-        [PendaftaranKerjasamaController::class, 'tolak']
-    )->name('pendaftaran-kerjasama.tolak');
-
-    Route::get(
-        '/pendaftaran-kerjasama/{pendaftaran}',
-        [PendaftaranKerjasamaController::class, 'show']
-    )->name('pendaftaran-kerjasama.show');
-
-    Route::delete(
-        '/pendaftaran-kerjasama/{pendaftaran}',
-        [PendaftaranKerjasamaController::class, 'destroy']
-    )->name('pendaftaran-kerjasama.destroy');
+    Route::get('/certificate/{certificate}/download', [CertificateController::class, 'download'])
+        ->name('certificate.download');
 
     // Users
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -162,7 +159,7 @@ Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Appearance (murni client-side, tidak butuh controller)
+    // Appearance
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/Appearance');
     })->name('appearance.edit');

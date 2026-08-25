@@ -74,24 +74,28 @@ class CertificateController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'certificate_template_id' => ['required', 'exists:certificate_templates,id'],
-            'recipient_name'          => ['required', 'string', 'max:255'],
-            'recipient_email'         => ['nullable', 'email', 'max:255'],
-            'event_name'              => ['nullable', 'string', 'max:255'],
-            'course_name'             => ['nullable', 'string', 'max:255'],
-            'description'             => ['nullable', 'string'],
-            'signatory_name'          => ['nullable', 'string', 'max:255'],
-            'signatory_role'          => ['nullable', 'string', 'max:255'],
-            'issued_at'               => ['required', 'date'],
-            'expired_at'              => ['nullable', 'date', 'after_or_equal:issued_at'],
-            'signature_image'         => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
-            'status'                  => ['required', 'in:draft,published'],
+            'certificate_template_id'  => ['required', 'exists:certificate_templates,id'],
+            'recipient_name'           => ['required', 'string', 'max:255'],
+            'recipient_email'          => ['nullable', 'email', 'max:255'],
+            'event_name'               => ['nullable', 'string', 'max:255'],
+            'course_name'              => ['nullable', 'string', 'max:255'],
+            'description'              => ['nullable', 'string'],
+            'signatory_name'           => ['nullable', 'string', 'max:255'],
+            'signatory_role'           => ['nullable', 'string', 'max:255'],
+            'issued_at'                => ['required', 'date'],
+            'expired_at'               => ['nullable', 'date', 'after_or_equal:issued_at'],
+            // PERBAIKAN: nama field disamakan dengan yang dikirim Vue (signatory_signature_path)
+            'signatory_signature_path' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
+            'status'                   => ['required', 'in:draft,published'],
         ]);
 
-        if ($request->hasFile('signature_image')) {
-            $validated['signatory_signature_path'] = $request->file('signature_image')->store('signatures', 'public');
+        // PERBAIKAN: cek & simpan pakai nama field yang benar
+        if ($request->hasFile('signatory_signature_path')) {
+            $validated['signatory_signature_path'] = $request->file('signatory_signature_path')->store('signatures', 'public');
+        } else {
+            // jangan timpa jadi null kalau memang tidak ada file baru dikirim
+            unset($validated['signatory_signature_path']);
         }
-        unset($validated['signature_image']);
 
         $validated['uuid']               = (string) Str::uuid();
         $validated['certificate_number'] = 'CERT-' . strtoupper(Str::random(8));
@@ -109,7 +113,6 @@ class CertificateController extends Controller
                 ],
             ]);
     }
-
     /**
      * Detail sertifikat.
      */
@@ -146,30 +149,34 @@ class CertificateController extends Controller
     /**
      * Update sertifikat.
      */
+
     public function update(Request $request, Certificate $certificate)
     {
         $validated = $request->validate([
-            'certificate_template_id' => ['required', 'exists:certificate_templates,id'],
-            'recipient_name'          => ['required', 'string', 'max:255'],
-            'recipient_email'         => ['nullable', 'email', 'max:255'],
-            'event_name'              => ['nullable', 'string', 'max:255'],
-            'course_name'             => ['nullable', 'string', 'max:255'],
-            'description'             => ['nullable', 'string'],
-            'signatory_name'          => ['nullable', 'string', 'max:255'],
-            'signatory_role'          => ['nullable', 'string', 'max:255'],
-            'issued_at'               => ['required', 'date'],
-            'expired_at'              => ['nullable', 'date', 'after_or_equal:issued_at'],
-            'signature_image'         => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
-            'status'                  => ['required', 'in:draft,published,revoked'],
+            'certificate_template_id'  => ['required', 'exists:certificate_templates,id'],
+            'recipient_name'           => ['required', 'string', 'max:255'],
+            'recipient_email'          => ['nullable', 'email', 'max:255'],
+            'event_name'               => ['nullable', 'string', 'max:255'],
+            'course_name'              => ['nullable', 'string', 'max:255'],
+            'description'              => ['nullable', 'string'],
+            'signatory_name'           => ['nullable', 'string', 'max:255'],
+            'signatory_role'           => ['nullable', 'string', 'max:255'],
+            'issued_at'                => ['required', 'date'],
+            'expired_at'               => ['nullable', 'date', 'after_or_equal:issued_at'],
+            // PERBAIKAN: nama field disamakan dengan yang dikirim Vue
+            'signatory_signature_path' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
+            'status'                   => ['required', 'in:draft,published,revoked'],
         ]);
 
-        if ($request->hasFile('signature_image')) {
+        if ($request->hasFile('signatory_signature_path')) {
             if ($certificate->signatory_signature_path && Storage::disk('public')->exists($certificate->signatory_signature_path)) {
                 Storage::disk('public')->delete($certificate->signatory_signature_path);
             }
-            $validated['signatory_signature_path'] = $request->file('signature_image')->store('signatures', 'public');
+            $validated['signatory_signature_path'] = $request->file('signatory_signature_path')->store('signatures', 'public');
+        } else {
+            // tidak ada file baru -> jangan timpa path lama yang sudah tersimpan
+            unset($validated['signatory_signature_path']);
         }
-        unset($validated['signature_image']);
 
         $certificate->update($validated);
 

@@ -16,6 +16,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use App\Http\Controllers\UserController;
+use App\Models\Certificate;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -43,13 +44,17 @@ Route::post('/join/kerjasama', [JoinController::class, 'storeKerjasama'])
 Route::get('/sertifikat', [CertificateVerificationController::class, 'index'])
     ->name('sertifikat.index');
 
+Route::get('/sertifikat/cari', [CertificateVerificationController::class, 'index'])
+    ->name('sertifikat.cari.form');
+
 Route::post('/sertifikat/cari', [CertificateVerificationController::class, 'search'])
     ->middleware('throttle:5,1')
     ->name('sertifikat.cari');
 
 Route::get('/sertifikat/{verificationCode}/download', [CertificateVerificationController::class, 'download'])
     ->name('sertifikat.download');
-    
+
+
 // ---------- ROUTE PROTECTED (MEMBER / ADMIN) ----------
 Route::middleware(['auth', 'verified', 'academy'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
